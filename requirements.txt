@@ -1,3 +1,9 @@
 chromedriver_installer
 selenium
+virtualenv
+requests
+flask
+flask-jsonpify
+flask-restful
+pymongo
 

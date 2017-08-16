@@ -5,24 +5,22 @@ from bs4 import BeautifulSoup
 from pymongo import MongoClient
 from threading import Timer
 from time import sleep
+from TaskManager import TaskManager
 
 import unicodedata
 
 # ------- Website to Crawl
 #gWebTarget = "https://www.tripadvisor.com.sg/Attraction_Review-g294265-d2139448-Reviews-ION_Orchard-Singapore.html"
-gWebTarget = "https://www.tripadvisor.com.sg/Attraction_Review-g294264-d2439664-Reviews-Universal_Studios_Singapore-Sentosa_Island.html"
-
+WEB_TARGET = "https://www.tripadvisor.com.sg/Attraction_Review-g294264-d2439664-Reviews-Universal_Studios_Singapore-Sentosa_Island.html"
+DEFAULT_REVIEW_SOURCE_URL = "https://www.tripadvisor.com.sg/Attraction_Review-g294264-d2439664-r***-Universal_Studios_Singapore-Sentosa_Island.html#REVIEWS"
 # ------- Selanium
 from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
 
-gSeleniumDriver = webdriver.Chrome(executable_path=r"E:\chromedriver_win32\chromedriver.exe")
-gSeleniumDriver.get(gWebTarget)
-#assert "ION" in gSeleniumDriver.title
-# ------- Total Number of Pages
-gStartPage = 101
-gTotalPages = 200 # 1176 48 pages
+#gSeleniumDriver = webdriver.Chrome(executable_path=r"E:\chromedriver_win32\chromedriver.exe")
+gSeleniumDriver = webdriver.Chrome()
 
+#assert "ION" in gSeleniumDriver.title
 # Global Set-up
 #gClient = MongoClient("localhost", 27017)
 #gDb = gClient.OrchandIon
@@ -31,15 +29,22 @@ gTotalPages = 200 # 1176 48 pages
 # ------- Set Global Variables
 gYggdrasil = [] #--- Array container for Parse-Trees
 
+gTaskMgr = TaskManager()
 # ------- Function Calls
 # HTML Convert to Parse-Tree Search Mark-00
 def fMark_00(vUrl, vParameter1, vParameter2a, vParameter2b) :
+  lSeleniumDriver = webdriver.Chrome()
+  
+  # ------- Total Number of Pages
+  gStartPage = 0
+  gTotalPages = 200 # 1176 48 pages
+  lSeleniumDriver.get(vUrl)
   # empty array list
   vContainer = [] # Multidimensional array # 0 - vOverallRatingContainer, 1 - vMainMemberContainer
   vMainMemberContainer = [] # Multidimensional array
   vOverallRatingContainer = [0,0,0,0,0,0] # 0 - Excellent, 1 - Very good, 2 - Average, 3 - Poor, 4 - Terrible, 5 - Total No Rating
   vMemberContainer = ["","","","",""] # 0 - Display Name, 1 - Username, 2 - Member Profile, 3 - Review Source, 4 - Review Source URL
-  vDefaultReviewSourceURL = "https://www.tripadvisor.com.sg/Attraction_Review-g294264-d2439664-r***-Universal_Studios_Singapore-Sentosa_Island.html#REVIEWS"
+  #vDefaultReviewSourceURL = "https://www.tripadvisor.com.sg/Attraction_Review-g294264-d2439664-r***-Universal_Studios_Singapore-Sentosa_Island.html#REVIEWS"
   
   #--- Initialisation ---#
   # Downloads the Raw Html Webpage
@@ -77,7 +82,7 @@ def fMark_00(vUrl, vParameter1, vParameter2a, vParameter2b) :
   vOverallRatingContainer[5] = int(vOverallRatingContainer[0]) + int(vOverallRatingContainer[1]) + int(vOverallRatingContainer[2]) + int(vOverallRatingContainer[3]) + int(vOverallRatingContainer[4])
   
   vContainer.append(vOverallRatingContainer)
-  
+  print(vContainer)  
   #--- Capture the User Names and User Profile Pages ---#
   vCount = 0
   
@@ -85,60 +90,79 @@ def fMark_00(vUrl, vParameter1, vParameter2a, vParameter2b) :
     vCount = vCount + 1
     # Save Output into CSV File
     if i >= gStartPage-1:
-                    if gStartPage == 1 and i == 0:
-                        f = open('E:/Temp/USS_Reviewers.csv', 'w', newline="\n") # open a csv file for writing
-                        f.write("Page" + ',' + "Display Name" + ',' + "Username" + ',' + "Member Profile" + ',' + "Review Source" + ',' + "Review Source URL" + "\n")
-                    else:
-                        f = open('E:/Temp/USS_Reviewers.csv', 'a', newline="\n") # open a csv file for append
-                    # Creates a Parse-Tree
-                    vSoupLoops = BeautifulSoup(gSeleniumDriver.page_source, 'html.parser')
-                    sleep(3)
-                    vMembers = []
-                    vMemberContainer = []
-                    vMembers = vSoupLoops.findAll('div', {'class' : "memberOverlayLink"})
-
-                    vMembers = vMembers[::2]
-                    for vMember in vMembers:
-                        empty, uid, src = re.split('UID_|-|-SRC_', vMember['id'])
-                        vMemberContainer = ["","","","",""]
-                        # Get Display Name
-                        vDisplayName = vMember.find('div', class_='username')
-                        vDisplayName = vDisplayName.text.strip()
-                        vDisplayName = unicodedata.normalize('NFKD', vDisplayName).encode('ascii','ignore')
-                        vDisplayName = vDisplayName.decode("utf-8", "ignore")
-                        # Get the User Review Source
-                        vReviewSource = src.replace("SRC_","")
-                        vReviewSource = vReviewSource.replace(" ","")
-                        vReviewSourceURL = vDefaultReviewSourceURL.replace("***", vReviewSource)
-                        # Get the URL of MembersOverlay for User
-                        vResponse = requests.get('http://www.tripadvisor.com.sg/MemberOverlay', params={'uid':uid})
-                        vOverlay = BeautifulSoup(vResponse.content, "html.parser")
-                        vUsername = vOverlay.find('a')['href']
-                        vUsername = vUsername.replace("/members/","")
-                        vMemberProfile = "https://www.tripadvisor.com.sg/members/" + vUsername
-
-                        vMemberContainer = [vDisplayName, vUsername, vMemberProfile, vReviewSource, vReviewSourceURL]
-                        f.write(str(vCount) + ',' + vDisplayName + ',' + vUsername + ',' + vMemberProfile + ',' + vReviewSource + ',' + vReviewSourceURL + "\n")
-                        # print("Display Name :", vMemberContainer[0], " - Username :", vMemberContainer[1], " - Member Profile :", vMemberContainer[2], " - Review Source :", vMemberContainer[3], " - Review Source URL :", vMemberContainer[4])
-                        vMainMemberContainer.append(vMemberContainer)
-                        # print("Display Name :", vMainMemberContainer[vMember][0], " - Username :", vMainMemberContainer[vMember][1], " - Member Profile :", vMainMemberContainer[vMember][2], " - Review Source :", vMainMemberContainer[vMember][3], " - Review Source URL :", vMemberContainer[4])
-                    vContainer.append(vMainMemberContainer)
-                    f.close()
-                    print("Page ",vCount," of ",gTotalPages," completed extraction")
+        # Lets skip writing to file
+        # if gStartPage == 1 and i == 0:
+        #     f = open('E:/Temp/USS_Reviewers.csv', 'w', newline="\n") # open a csv file for writing
+        #     f.write("Page" + ',' + "Display Name" + ',' + "Username" + ',' + "Member Profile" + ',' + "Review Source" + ',' + "Review Source URL" + "\n")
+        # else:
+        #     f = open('E:/Temp/USS_Reviewers.csv', 'a', newline="\n") # open a csv file for append
+         
+        # Creates a Parse-Tree
+        vSoupLoops = BeautifulSoup(lSeleniumDriver.page_source, 'html.parser')
+        #sleep(3)
+        # vMemberContainer = fetchReviewerInfo(vSoupLoops)
+        gTaskMgr.addTask(fetchReviewerInfo, fetchReviewerInfoCallback, vSoupLoops)
+        # vMainMemberContainer.append(vMemberContainer)
+        # print("Display Name :", vMainMemberContainer[vMember][0], " - Username :", vMainMemberContainer[vMember][1], " - Member Profile :", vMainMemberContainer[vMember][2], " - Review Source :", vMainMemberContainer[vMember][3], " - Review Source URL :", vMemberContainer[4])
+        vContainer.append(vMainMemberContainer)
+        # f.close()
+        print("Page ",vCount," of ",gTotalPages," completed extraction")
     else:
         print("Page ",vCount," of ",gTotalPages," skipped extraction")
         # --- Get Next Button
     if vCount < gTotalPages:
-                    gNextButton = gSeleniumDriver.find_element_by_xpath("//*[@class='nav next taLnk ']")
+                    gNextButton = lSeleniumDriver.find_element_by_xpath("//*[@class='nav next taLnk ']")
                     gNextButton.click()
                     
-    sleep(5)
+    sleep(1)
     
-  gSeleniumDriver.close()
+  lSeleniumDriver.close()
   # return value
   return vContainer
-  
-vYggdrasil = fMark_00(gWebTarget, 'div', 'id', 'taplc_location_detail_two_column_top_0')
+
+def fetchReviewerInfo(htmlCode) :
+    vMembers = []
+    vMemberContainer = []
+    vMembers = htmlCode.findAll('div', {'class' : "memberOverlayLink"})
+    vMembers = vMembers[::2]
+    reviewListOut = []
+    for vMember in vMembers:
+        empty, uid, src = re.split('UID_|-|-SRC_', vMember['id'])
+        vMemberContainer = ["","","","",""]
+        # Get Display Name
+        vDisplayName = vMember.find('div', class_='username')
+        vDisplayName = vDisplayName.text.strip()
+        vDisplayName = unicodedata.normalize('NFKD', vDisplayName).encode('ascii','ignore')
+        vDisplayName = vDisplayName.decode("utf-8", "ignore")
+        # Get the User Review Source
+        vReviewSource = src.replace("SRC_","")
+        vReviewSource = vReviewSource.replace(" ","")
+        vDefaultReviewSourceURL = DEFAULT_REVIEW_SOURCE_URL
+        vReviewSourceURL = vDefaultReviewSourceURL.replace("***", vReviewSource)
+        # Get the URL of MembersOverlay for User
+        vResponse = requests.get('http://www.tripadvisor.com.sg/MemberOverlay', params={'uid':uid})
+        vOverlay = BeautifulSoup(vResponse.content, "html.parser")
+        vUsername = vOverlay.find('a')['href']
+        vUsername = vUsername.replace("/members/","")
+        vMemberProfile = "https://www.tripadvisor.com.sg/members/" + vUsername
+        
+        #Build member dictionary
+        memberData = {}
+        memberData["displayName"] = vDisplayName
+        memberData["userName"] = vUsername
+        memberData["profileURL"] = vMemberProfile
+        memberData["reviewID"] = vReviewSource
+        memberData["reviewURL"] = vReviewSourceURL
+        reviewListOut.append(memberData)
+    #print(reviewListOut)
+    return reviewListOut
+    
+
+def fetchReviewerInfoCallback(ftr) :
+    print("@callback", ftr.result())
+
+def fetchReviewers(targetURL) :  
+    vYggdrasil = fMark_00(targetURL, 'div', 'id', 'taplc_location_detail_two_column_top_0')
 
 # Save Output into CSV File
 #f = open('E:/Temp/USS_Reviewers.csv', 'w', newline="\n") # open a csv file for writing
