@@ -6,6 +6,7 @@ from selenium.webdriver.common.keys import Keys
 import json
 import pprint
 from time import sleep
+import SentimentAnalysis as SA
 
 def getReviewDetails(p_loc, p_title):
         #print('p_loc: ' + p_loc)
@@ -20,6 +21,16 @@ def getReviewDetails(p_loc, p_title):
         #review=fullreviewContainer.findAll('p', {'property':'reviewBody'}) #not all review has this tag
         review=fullreviewContainer.findAll('div', {'class':'entry'})
         review=review[0].text.strip()
+        r = SA.GetSentimentAnalysis(review)
+        data = r.json()
+        label = data['label']
+        neg = data['probability']['neg']
+        neu = data['probability']['neutral']
+        pos = data['probability']['pos']
+        print(label)
+        print(neg)
+        print(neu)
+        print(pos)
         # Part Two
         HeaderContainer = soup.find('h1', {'id':'HEADING'})
         reviewtitle=HeaderContainer.find('div',{'id':'PAGEHEADING'})
@@ -35,7 +46,7 @@ def getReviewDetails(p_loc, p_title):
                 re.sub(r'\(.*?\)', '',reviewloc)
         elif l_LocContainer == 0:
                 reviewloc = 'NA'        
-        return(reviewid,reviewloc,reviewentity,reviewtitle,review)
+        return(reviewid,reviewloc,reviewentity,reviewtitle,review,r)
 
 def getReviewCategory(location):
 	category = 'NULL'
@@ -80,7 +91,7 @@ def getMemberReviews(input):
 	#reviewContainer = soup.findAll('li', {'class':'cs-review'})
 	
 	jsonMemberReviewList = []
-	jsonDetailsReviewList = []
+	#jsonDetailsReviewList = []
 	pageCount = 2
 
 	while(True):#for each page
@@ -105,20 +116,40 @@ def getMemberReviews(input):
 		  i_title=title['href']
 		  reviewdetails=getReviewDetails(i_loc,i_title)
 
-		  MemberReviewData = {"ReviewCategory" : getReviewCategory(location),
-							"ReviewID" : reviewdetails[0],
-							"ReviewDate" : date.text.strip(),
-							"ReviewRating" : getReviewRating(rating),
-							"ReviewVotes" : vote,
-							"ReviewPoints" : points.text}
-		  DetailsReviewData = {"ReviewID" : reviewdetails[0], 
-							"ReviewLocation" : reviewdetails[1],
-							"ReviewEntity" : reviewdetails[2],     
-							"ReviewTitle" : reviewdetails[3],
-							"Review" : reviewdetails[4]}
+		  r = reviewdetails[5]
+		  data = r.json()
+		  Review = {"ReviewCategory" : getReviewCategory(location),
+					"ReviewID" : reviewdetails[0],
+					"ReviewDate" : date.text.strip(),
+					"ReviewRating" : getReviewRating(rating),
+					"ReviewVotes" : vote,
+					"ReviewPoints" : points.text,
+					"ReviewLocation" : reviewdetails[1],
+					"ReviewEntity" : reviewdetails[2],     
+					"ReviewTitle" : reviewdetails[3],
+					"Review" : reviewdetails[4],
+					"Sentiment:" : [{
+							"Label" : data['label'],
+							"Pos" : data['probability']['pos'],
+							"Neutral" : data['probability']['neutral'],
+							"Neg" : data['probability']['neg']}],
+					}
+		  jsonMemberReviewList.append(Review)
 
-		  jsonMemberReviewList.append(MemberReviewData)
-		  jsonDetailsReviewList.append(DetailsReviewData)
+		  #MemberReviewData = {"ReviewCategory" : getReviewCategory(location),
+				#			"ReviewID" : reviewdetails[0],
+				#			"ReviewDate" : date.text.strip(),
+				#			"ReviewRating" : getReviewRating(rating),
+				#			"ReviewVotes" : vote,
+				#			"ReviewPoints" : points.text}
+		  #DetailsReviewData = {"ReviewID" : reviewdetails[0], 
+				#			"ReviewLocation" : reviewdetails[1],
+				#			"ReviewEntity" : reviewdetails[2],     
+				#			"ReviewTitle" : reviewdetails[3],
+				#			"Review" : reviewdetails[4]}
+
+		  #jsonMemberReviewList.append(MemberReviewData)
+		  #jsonDetailsReviewList.append(DetailsReviewData)
 		
 		next_page_elem = driver.find_element_by_id('cs-paginate-next')
 		next_page_link = pageSoup.find('button', text='%d' % pageCount)
@@ -131,11 +162,13 @@ def getMemberReviews(input):
 			break
 	
 	driver.quit()
-	return (jsonMemberReviewList,jsonDetailsReviewList)
+	return (jsonMemberReviewList)
+	#return (jsonMemberReviewList,jsonDetailsReviewList)
 
 
-result = getMemberReviews('https://www.tripadvisor.com.sg/members/vykye2000')
-pprint.pprint(result[0])
-pprint.pprint(result[1])
-print('reviewList: ' + str(len(result[0])))
-print('reviewList: ' + str(len(result[1])))
+#result = getMemberReviews('https://www.tripadvisor.com.sg/members/vykye2000')
+result = getMemberReviews('https://www.tripadvisor.com.sg/members/GeeC5')
+pprint.pprint(result)
+#pprint.pprint(result[1])
+print('reviewList: ' + str(len(result)))
+#print('reviewList: ' + str(len(result[1])))
