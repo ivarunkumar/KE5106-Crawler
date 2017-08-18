@@ -1,13 +1,10 @@
 from Profile import Profile
-import json
 from bs4 import BeautifulSoup
 from selenium import webdriver
 from selenium.common.exceptions import TimeoutException
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
-
-
 
 def fetchBadgeInfo(url):
     browser = webdriver.PhantomJS('phantomjs.exe')
@@ -65,7 +62,7 @@ def fetchBadgeInfo(url):
         #print(badgeText[0].get_text().strip())
         # print(subText[0].get_text().strip())
         Badges.append(badgeText[0].get_text().strip()+","+subText[0].get_text().strip())
-    p = profile(Name,ASince,htown,points,level,tBadges,tBadgesLink,Badges)
+    p = Profile(Name,ASince,htown,points,level,tBadges,tBadgesLink,Badges)
     #print("----------------")
     #print(p.totalBadges)
     #myjson =json.dumps(p, default=lambda o: o.__dict__)
