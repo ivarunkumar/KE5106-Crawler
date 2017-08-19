@@ -8,7 +8,7 @@ from time import sleep
 from TaskManager import TaskManager
 
 import unicodedata
-
+#
 # ------- Website to Crawl
 #gWebTarget = "https://www.tripadvisor.com.sg/Attraction_Review-g294265-d2139448-Reviews-ION_Orchard-Singapore.html"
 WEB_TARGET = "https://www.tripadvisor.com.sg/Attraction_Review-g294264-d2439664-Reviews-Universal_Studios_Singapore-Sentosa_Island.html"
