@@ -10,11 +10,23 @@ from TaskManager import TaskManager, Task
 import SentimentAnalysis as SA
 import threading
 
-def getReviewDetails(args):
-    print("@getReviewDetails", threading.currentThread().getName(), args)
-    p_loc = args [0]
-    p_title = args [1] 
-    p_title='https://www.tripadvisor.com.sg'+p_title
+gReviewTaskMgr = TaskManager("INFO", 20)
+
+def getReviewDetails(reviewContainer):
+    print("@getReviewDetails", threading.currentThread().getName())
+    location = reviewContainer.find('div', {'class':'cs-review-location'})
+    title = reviewContainer.find('a', {'class':'cs-review-title'})
+    date = reviewContainer.find('div', {'class': 'cs-review-date'})
+    rating = reviewContainer.find('div', {'class': 'cs-review-rating'})
+    votes = reviewContainer.find('div', {'class': 'cs-review-helpful-votes'})
+    if(votes): #class will not appear if no votes
+        vote = votes.text.strip()
+    else:
+        vote = 0
+    points = reviewContainer.find('div', {'class': 'cs-points'})
+    i_loc= location.find('a')['href']
+    i_title=title['href']
+    p_title='https://www.tripadvisor.com.sg'+i_title
     html_title = requests.get(p_title)
     soup = BS(html_title.content, 'html.parser')
     # Part One
@@ -34,8 +46,9 @@ def getReviewDetails(args):
     # Part Two
     HeaderContainer = soup.find('h1', {'id':'HEADING'})
     reviewtitle=HeaderContainer.find('div',{'id':'PAGEHEADING'})
-    reviewtitle=reviewtitle.text.strip()
-    reviewentity=HeaderContainer.find('a',{'href':p_loc})
+    if (reviewtitle != None) :
+        reviewtitle=reviewtitle.text.strip()
+    reviewentity=HeaderContainer.find('a',{'href':i_loc})
     reviewentity=reviewentity.text.strip()
     # Part Three
     LocContainer = soup.findAll('span',{'class':'format_address'})
@@ -45,8 +58,19 @@ def getReviewDetails(args):
         reviewloc=reviewloc[-1].strip()
         re.sub(r'\(.*?\)', '',reviewloc)
     elif l_LocContainer == 0:
-        reviewloc = 'NA'        
-    reviewOut = (reviewid,reviewloc,reviewentity,reviewtitle,review,r)
+        reviewloc = 'NA'
+    
+    reviewOut = {}
+    reviewOut["reviewCateogory"] = getReviewCategory(location)
+    reviewOut["reviewData"] =  date.text.strip()
+    reviewOut["reviewRating"] = getReviewRating(rating)
+    reviewOut["points"]=points.text
+    reviewOut["reviewId"] = reviewid
+    reviewOut["reviewloc"] = reviewloc
+    reviewOut["reviewentity"] = reviewentity
+    reviewOut["reviewtitle"] = reviewtitle
+    reviewOut["sentimentJson"] = r
+    #reviewOut = (reviewid,reviewloc,reviewentity,reviewtitle,review,r)
     print ("@getReviewDetails", reviewOut)        
     return reviewOut 
 
@@ -102,19 +126,9 @@ def getMemberReviews(input):
         reviewContainer = pageSoup.findAll('li', {'class':'cs-review'})
         reviewSize = len(reviewContainer)
         for i in range(reviewSize):
-            location = reviewContainer[i].find('div', {'class':'cs-review-location'})
-            title = reviewContainer[i].find('a', {'class':'cs-review-title'})
-            date = reviewContainer[i].find('div', {'class': 'cs-review-date'})
-            rating = reviewContainer[i].find('div', {'class': 'cs-review-rating'})
-            votes = reviewContainer[i].find('div', {'class': 'cs-review-helpful-votes'})
-            if(votes): #class will not appear if no votes
-                vote = votes.text.strip()
-            else:
-                vote = 0
-            points = reviewContainer[i].find('div', {'class': 'cs-points'})
-            i_loc= location.find('a')['href']
-            i_title=title['href']
-            print ("@getMemberReviews >>>> ", i_loc, i_title)
+            print ("@getMemberReviews >>>> ", reviewContainer[i])
+            task = Task("MEMBER_REVIEW", getReviewDetails, getReviewDetailsCallBack, reviewContainer[i])
+            gReviewTaskMgr.addTaskQ(task)
         next_page_elem = driver.find_element_by_id('cs-paginate-next')
         next_page_link = pageSoup.find('button', text='%d' % pageCount)
         
@@ -135,26 +149,8 @@ def getReviewDetailsCallBack(futureObj) :
 
 
 def getMemberReviewsCallback(futureObj) :
-    reviewdetails = futureObj.result()
-    print("@getMemberReviewsCallback", threading.currentThread().getName(), reviewdetails)
-    r = reviewdetails[5]
-    data = r.json()
-    Review = {"ReviewCategory" : getReviewCategory(location),
-                "ReviewID" : reviewdetails[0],
-                "ReviewDate" : date.text.strip(),
-                "ReviewRating" : getReviewRating(rating),
-                "ReviewVotes" : vote,
-                "ReviewPoints" : points.text,
-                "ReviewLocation" : reviewdetails[1],
-                "ReviewEntity" : reviewdetails[2],
-                "ReviewTitle" : reviewdetails[3],
-                "Review" : reviewdetails[4],
-                "Sentiment:" : [{
-                        "Label" : data['label'],
-                        "Pos" : data['probability']['pos'],
-                        "Neutral" : data['probability']['neutral'],
-                        "Neg" : data['probability']['neg']}],
-                     }
+    Review = futureObj.result()
+    print("@getMemberReviewsCallback", threading.currentThread().getName(), Review)
     #jsonMemberReviewList.append(Review)
             
      #     pprint.pprint(MemberReviewData)
