@@ -7,6 +7,7 @@ from threading import Timer
 from time import sleep
 from TaskManager import TaskManager, Task
 from MemberReview import getMemberReviews, getMemberReviewsCallback
+from Persistence import DataManager
 
 import unicodedata
 #
@@ -32,6 +33,7 @@ from selenium.common.exceptions import TimeoutException
 gYggdrasil = [] #--- Array container for Parse-Trees
 
 gTaskMgr = TaskManager("REVIEWER")
+dataManager = DataManager()
 
 # ------- Function Calls
 # HTML Convert to Parse-Tree Search Mark-00
@@ -85,7 +87,20 @@ def fMark_00(vUrl, vParameter1, vParameter2a, vParameter2b) :
     vOverallRatingContainer[5] = int(vOverallRatingContainer[0]) + int(vOverallRatingContainer[1]) + int(vOverallRatingContainer[2]) + int(vOverallRatingContainer[3]) + int(vOverallRatingContainer[4])
     
     vContainer.append(vOverallRatingContainer)
-    print(vContainer)  
+    
+    entityName = vSoup.find('h1', {'id':'HEADING'}).text.strip()
+    entity = {
+        "name" : entityName,
+        "rating" : {
+            "excellent" : vOverallRatingContainer[0],
+            "veryGood" : vOverallRatingContainer[1],
+            "average" : vOverallRatingContainer[2],
+            "poor" : vOverallRatingContainer[3],
+            "terrible" : vOverallRatingContainer[4],
+        }
+    }
+    dataManager.saveEntity(entity)
+    #print(vContainer)  
     #--- Capture the User Names and User Profile Pages ---#
     vCount = 0
     
@@ -93,13 +108,6 @@ def fMark_00(vUrl, vParameter1, vParameter2a, vParameter2b) :
         vCount = vCount + 1
         # Save Output into CSV File
         if i >= gStartPage-1:
-            # Lets skip writing to file
-            # if gStartPage == 1 and i == 0:
-            #     f = open('E:/Temp/USS_Reviewers.csv', 'w', newline="\n") # open a csv file for writing
-            #     f.write("Page" + ',' + "Display Name" + ',' + "Username" + ',' + "Member Profile" + ',' + "Review Source" + ',' + "Review Source URL" + "\n")
-            # else:
-            #     f = open('E:/Temp/USS_Reviewers.csv', 'a', newline="\n") # open a csv file for append
-             
             # Creates a Parse-Tree
             vSoupLoops = BeautifulSoup(lSeleniumDriver.page_source, 'html.parser')
             #sleep(3)
@@ -167,13 +175,17 @@ def fetchReviewerInfoCallback(futureObj) :
     # Fetch the profile URL and scrap member details
     # Each profile will be queued for processing
     for profile in profiles :
+        #persistReviewProfile(profile)
         profileUrl = profile['profileURL']
         print ("Processing MemberReview for", profile["userName"], profileUrl)
         task = Task("MEMBER_REVIEWS", getMemberReviews, getMemberReviewsCallback, profileUrl)
         gTaskMgr.addTaskQ(task)
-        #gTaskMgr.addTask()
 
-
+# def persistReviewProfile(profile) :
+#     profileDoc = {
+#         "userName" : profile["userName"],
+#         "r"
+#     }
 def fetchReviewers(targetURL) :  
     vYggdrasil = fMark_00(targetURL, 'div', 'id', 'taplc_location_detail_two_column_top_0')
 

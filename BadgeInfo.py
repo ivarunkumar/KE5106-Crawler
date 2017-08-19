@@ -6,65 +6,93 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 
-def fetchBadgeInfo(url):
+def fetchBadgeInfo(soup):
     browser = webdriver.PhantomJS('phantomjs.exe')
-    #browser.get('https://www.tripadvisor.com.sg/members/924dianae')
-    browser.get(url)
-    timeout = 1
-    try:
-        element_present = EC.presence_of_element_located((By.ID, 'element_id'))
-        WebDriverWait(browser, timeout).until(element_present)
-    except TimeoutException:
-        print("Timed out waiting for page to load")
-    html = browser.page_source
-    # print(html)
-    soup = BeautifulSoup(html, "html.parser")
     # find name
-    profie = soup.find_all("span", {"class": "nameText "})
-    Name = profie[0].get_text().strip()
+    profileTmp = soup.find_all("span", {"class": "nameText "})
+    Name = profileTmp[0].get_text().strip()
     #print(Name)
     # find agesince
     ageSince = soup.find_all("div", {"class": "ageSince"})
-    ASince = ""
-    for since in ageSince:
-        ASince += since.get_text().strip()
+    ageSince2 =ageSince[0].find_all("p")
+    ASince = ageSince2[0].get_text().strip()
+    Age = ''
+    sex=''
+
+    try:
+        Age = ageSince2[1].get_text().strip()
+        Age=Age.lower()
+
+
+        if "female" in Age:
+            sex = 'female'
+            Age = Age.replace('female', '')
+        if "male" in Age:
+            sex='male'
+            Age =Age.replace('male', '')
+
+    except:
+        Age = ''
+
+#  for since in ageSince:
+     #   ASince += since.get_text().strip()
+
     #print(ASince)
+
     # find hometown
     hometown = soup.find_all("div", {"class": "hometown"})
+
     htown = ""
+
     for home in hometown:
         htown += home.get_text().strip()
+
     #print(htown)
+
     # find total point
     points = soup.find_all("div", {"class": "points"})
     points = points[0].get_text().strip()
+
     #print(points)
+
     # find level
     tripcollectiveinfo = soup.find_all("div", {"class": "level tripcollectiveinfo"})
     # print(tripcollectiveinfo)
     level = tripcollectiveinfo[0].get_text().strip()
+
     #print(level)
+
     # find totalBadges
     totalBadges = soup.find_all("a", {"class": "totalBadges"})
     tBadges = totalBadges[0].get_text().strip()
     tBadgesLink = totalBadges[0]['href']
+
     #print(tBadges)
     #print(tBadgesLink)
-    browser.get('https://www.tripadvisor.com.sg/' + tBadgesLink)
-    html2 = browser.page_source
-    soup2 = BeautifulSoup(html2, "html.parser")
-    earnedBadges = soup2.find_all("li", {"class": "memberBadges"})
-    #print(earnedBadges)
-    Badges = []          ## Start as the empty list
-    for Badge in earnedBadges:
-        badgeText = Badge.find_all("div", {"class": "badgeText"})
-        subText = Badge.find_all("span", {"class": "subText"})
-        #print(badgeText[0].get_text().strip())
-        # print(subText[0].get_text().strip())
-        Badges.append(badgeText[0].get_text().strip()+","+subText[0].get_text().strip())
-    p = Profile(Name,ASince,htown,points,level,tBadges,tBadgesLink,Badges)
-    #print("----------------")
-    #print(p.totalBadges)
-    #myjson =json.dumps(p, default=lambda o: o.__dict__)
-    #print (myjson)
+
+    tagBlocklist = []
+#    tagBlock = soup.find_all("div", {"class": "memberTags"})
+    tagBlock = soup.find_all("div", {"class": "tagBubble unclickable"})
+    for tag in tagBlock:
+        #print(tag.get_text().strip())
+        tagBlocklist.append(tag.get_text().strip())
+
+    Largebadge= []
+    LargebadgeSoup =soup.find_all("div", {"class": "badgeList badgeListLoggedOut"})
+
+    for tagbadge in LargebadgeSoup:
+
+        Largebadgename = tagbadge.find_all("div", {"class": "badgeName"})
+        LargebadgeText = tagbadge.find_all("div", {"class": "badgeSubtext"})
+
+        for i in range(0, len(Largebadgename)):
+            Largebadge.append(Largebadgename[i].get_text().strip()+": "+LargebadgeText[i].get_text().strip() )
+
+
+        print (Largebadgename)
+
+    p = Profile(Name,ASince,Age,sex,htown,points,level,tagBlocklist,Largebadge,tBadges,tBadgesLink)
     return p
+
+def fetchBadgeInfoCallback(futureObj):
+    print("@fetchBadgeInfoCallback", futureObj.result())
