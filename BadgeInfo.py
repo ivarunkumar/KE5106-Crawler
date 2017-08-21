@@ -16,6 +16,7 @@ def fetchBadgeInfo(soup):
     ageSince = soup.find_all("div", {"class": "ageSince"})
     ageSince2 =ageSince[0].find_all("p")
     ASince = ageSince2[0].get_text().strip()
+    ASince = ASince[-4:]
     Age = ''
     sex=''
 
@@ -27,9 +28,13 @@ def fetchBadgeInfo(soup):
         if "female" in Age:
             sex = 'female'
             Age = Age.replace('female', '')
+            Age = Age.replace('year old', '')
+
+
         if "male" in Age:
             sex='male'
             Age =Age.replace('male', '')
+            Age = Age.replace('year old', '')
 
     except:
         Age = ''
@@ -59,12 +64,15 @@ def fetchBadgeInfo(soup):
     tripcollectiveinfo = soup.find_all("div", {"class": "level tripcollectiveinfo"})
     # print(tripcollectiveinfo)
     level = tripcollectiveinfo[0].get_text().strip()
+    level = level.replace('Level', '')
+    level = level.replace('Contributor', '')
 
     #print(level)
 
     # find totalBadges
     totalBadges = soup.find_all("a", {"class": "totalBadges"})
     tBadges = totalBadges[0].get_text().strip()
+    tBadges=tBadges.replace('total', '')
     tBadgesLink = totalBadges[0]['href']
 
     #print(tBadges)
