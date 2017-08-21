@@ -5,10 +5,10 @@ from bs4 import BeautifulSoup
 from pymongo import MongoClient
 from threading import Timer
 from time import sleep
-from TaskManager import TaskManager, Task
-from MemberReview import getMemberReviews, getMemberReviewsCallback
+from TaskManager import TaskManager, Task, BrowserTaskManager
+from MemberReview import getMemberReviews, getMemberReviewsCallback, gReviewTaskMgr, gReviewerTaskMgr
 from Persistence import DataManager
-
+import threading
 import unicodedata
 #
 # ------- Website to Crawl
@@ -33,6 +33,7 @@ from selenium.common.exceptions import TimeoutException
 gYggdrasil = [] #--- Array container for Parse-Trees
 
 gTaskMgr = TaskManager("REVIEWER")
+reviewTaskMgr = TaskManager("REVIEW_INFO")
 dataManager = DataManager()
 
 # ------- Function Calls
@@ -41,8 +42,8 @@ def fMark_00(vUrl, vParameter1, vParameter2a, vParameter2b) :
     lSeleniumDriver = webdriver.Chrome()
     
     # ------- Total Number of Pages
-    gStartPage = 0
-    gTotalPages = 2 # 1176 48 pages
+    gStartPage = 1
+    gTotalPages = 100 # 1176 48 pages
     lSeleniumDriver.get(vUrl)
     # empty array list
     vContainer = [] # Multidimensional array # 0 - vOverallRatingContainer, 1 - vMainMemberContainer
@@ -103,11 +104,14 @@ def fMark_00(vUrl, vParameter1, vParameter2a, vParameter2b) :
     #print(vContainer)  
     #--- Capture the User Names and User Profile Pages ---#
     vCount = 0
-    
-    for i in range(gTotalPages):
-        vCount = vCount + 1
+    pageNum = 1
+    while True:
         # Save Output into CSV File
-        if i >= gStartPage-1:
+        if pageNum >= gStartPage-1:
+            vCount = vCount + 1
+            if vCount > gTotalPages:
+                print ("********* REMOVE PAGE LIMIT *********** ")
+                break
             # Creates a Parse-Tree
             vSoupLoops = BeautifulSoup(lSeleniumDriver.page_source, 'html.parser')
             #sleep(3)
@@ -122,14 +126,14 @@ def fMark_00(vUrl, vParameter1, vParameter2a, vParameter2b) :
         else:
             print("Page ",vCount," of ",gTotalPages," skipped extraction")
             # --- Get Next Button
-        if vCount < gTotalPages:
-            sleep(1)
-            gNextButton = lSeleniumDriver.find_element_by_xpath("//*[@class='nav next taLnk ']")
+
+        gNextButton = lSeleniumDriver.find_element_by_xpath("//*[@class='nav next taLnk ']")
+        if gNextButton :
             gNextButton.click()
-            #WebDriverWait(lSeleniumDriver, 2).until(EC.((By.CLASS_NAME, 'nav next taLnk ')))
+            sleep(1)
         else :
-            print ("********* REMOVE PAGE LIMIT *********** ")
-            
+            break
+        pageNum = pageNum + 1
     lSeleniumDriver.close()
     # return value
     return vContainer
@@ -170,7 +174,7 @@ def fetchReviewerInfo(htmlCode) :
     
 
 def fetchReviewerInfoCallback(futureObj) :
-    print("@fetchReviewerInfoCallback", futureObj.result())
+    log("@fetchReviewerInfoCallback", futureObj.result())
     profiles = futureObj.result()
     # Fetch the profile URL and scrap member details
     # Each profile will be queued for processing
@@ -178,19 +182,19 @@ def fetchReviewerInfoCallback(futureObj) :
         #persistReviewProfile(profile)
         profileUrl = profile['profileURL']
         print ("Processing MemberReview for", profile["userName"], profileUrl)
-        task = Task("MEMBER_REVIEWS", getMemberReviews, getMemberReviewsCallback, profileUrl)
-        gTaskMgr.addTaskQ(task)
+        task = Task("MEMBER_INFO", getMemberReviews, getMemberReviewsCallback, profileUrl)
+        gReviewerTaskMgr.addTaskQ(task)
+    log("@fetchReviewerInfoCallback", "Done")
 
-# def persistReviewProfile(profile) :
-#     profileDoc = {
-#         "userName" : profile["userName"],
-#         "r"
-#     }
+
 def fetchReviewers(targetURL) :  
     vYggdrasil = fMark_00(targetURL, 'div', 'id', 'taplc_location_detail_two_column_top_0')
 
+def log(key, content):
+    print(key, threading.currentThread().getName(), content)
+    
 def main():
-    gReviewTaskMgr = TaskManager("INFO")
+    #gReviewerTaskMgr = TaskManager("INFO")
     fetchReviewers(WEB_TARGET)
     #stopTask = Task("END_WORKER", None, None, None)
     #gTaskMgr.addTaskQ(stopTask)
@@ -198,45 +202,3 @@ def main():
     
 if __name__ == '__main__':
     main()   
-
-# Save Output into CSV File
-#f = open('E:/Temp/USS_Reviewers.csv', 'w', newline="\n") # open a csv file for writing
-
-# --- Write CSV headers
-# --- Find Total Rating Count
-#vTotalRatingsInvYggdrasil = len(vYggdrasil[0])
-#f.write("Excellent" + ',' + "Very good" + ',' + "Average" + ',' + "Poor" + ',' + "Terrible" + ',' + "Total No Rating" + "\n")
-#f.write(str(vYggdrasil[0][0]) + ',' + str(vYggdrasil[0][1]) + ',' + str(vYggdrasil[0][2]) + ',' + str(vYggdrasil[0][3]) + ',' + str(vYggdrasil[0][4]) + ',' + str(vYggdrasil[0][5]) + "\n")
-
-#vDocument = {'Excellent':vYggdrasil[0][0],
-#                'Very good':vYggdrasil[0][1],
-#       'Average':vYggdrasil[0][2],
-#       'Poor':vYggdrasil[0][3],
-#       'Terrible':vYggdrasil[0][4],
-#       'Total No Rating':vYggdrasil[0][5]}
-#gCollection.insert(vDocument)
-
-  
-# --- Write CSV headers
-# --- Find Total Member Count
-#vTotalMembersInvYggdrasil = len(vYggdrasil[1])
-#f.write("Display Name" + ',' + "Username" + ',' + "Member Profile" + ',' + "Review Source" + ',' + "Review Source URL" + "\n")
-
-# --- Run a Loop -> Write Each Row into CSV
-#for i in range(vTotalMembersInvYggdrasil):
-# f.write(vYggdrasil[1][i][0] + ',' + vYggdrasil[1][i][1] + ',' + vYggdrasil[1][i][2] + ',' + vYggdrasil[1][i][3] + ',' + vYggdrasil[1][i][4] + "\n")
-  #vDocument = {'Display Name':vYggdrasil[1][i][0],
-  #       'Username':vYggdrasil[1][i][1],
-  #       'Member Profile':vYggdrasil[1][i][2],
-  #       'Review Source':vYggdrasil[1][i][3],
-  #       'Review Source URL':vYggdrasil[1][i][4]}
-  #gCollection.insert(vDocument)
-    
-#f.close() # close the file
-
-#print("Number of Documents Inserted :", gCollection.count())
-
-#for x in gCollection.find():
-# print(x)
-
-#gClient.close() # close mongoDB

@@ -7,7 +7,10 @@ input = 'lousy'
 def GetSentimentAnalysis(x):
     payload = {'text': x}
     r = requests.post(url, data=payload)
-    return(r)
+    if r.status_code == 200 :
+        return(r)
+    else:
+        return None
 
 #r = GetSentimentAnalysis(input)
 #data = r.json()

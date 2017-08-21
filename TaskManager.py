@@ -3,6 +3,7 @@ import threading
 from time import sleep
 from queue import Queue
 import logging
+from selenium import webdriver
 
 class Task :
     def __init__(self, taskName, taskfn, callbackfn, args):
@@ -12,7 +13,6 @@ class Task :
         self.taskArgs = args
          
 class TaskManager (object) :
-    
     def __init__(self, poolName, threadCount=10) : 
         self.gThreadPool = ThreadPoolExecutor(threadCount, poolName)
         self.taskQueue = Queue()
@@ -36,11 +36,22 @@ class TaskManager (object) :
         print("Task enqueued")
         
     def addTaskQ(self, task):
-        print("Queuing", task.taskName) 
         self.taskQueue.put(task)
+        print("Queuing", task.taskName, "Queue Size", self.taskQueue.qsize());
         
     def cleanUp(self):
         self.dequeThread.join()
         self.gThreadPool.shutdown()
-
-
+        
+class BrowserTaskManager (TaskManager):
+    
+    def __init__(self, poolName, threadCount=10) : 
+        super(BrowserTaskManager, self).__init__(poolName, threadCount)
+        self.drivers=[]
+        for i in range(threadCount) :
+            driver = webdriver.Chrome()
+            self.drivers.append(driver)
+            
+    def getDriver(self, index): 
+        return self.drivers[index] 
+        

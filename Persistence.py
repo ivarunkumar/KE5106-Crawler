@@ -16,7 +16,7 @@ class DataManager :
         
     def saveReviewer (self, reviewer) :
         print ("@saveReview", reviewer)
-        DataManager.tripAdvisorDB.Reviewer.insert_one(reviewer)
+        DataManager.tripAdvisorDB.Reviewers.insert_one(reviewer)
 
     def saveReviewers (self, reviewers) :
         print ("@saveReviewers", reviewers)
@@ -24,6 +24,6 @@ class DataManager :
         
     def saveEntity (self, entity) :
         print ("@saveEntity", entity)
-        DataManager.tripAdvisorDB.Entity.insert_one(entity)
+        DataManager.tripAdvisorDB.Entities.insert_one(entity)
 
 

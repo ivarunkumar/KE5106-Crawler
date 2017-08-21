@@ -7,7 +7,7 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 
 def fetchBadgeInfo(soup):
-    browser = webdriver.PhantomJS('phantomjs.exe')
+    #browser = webdriver.PhantomJS('phantomjs.exe')
     # find name
     profileTmp = soup.find_all("span", {"class": "nameText "})
     Name = profileTmp[0].get_text().strip()

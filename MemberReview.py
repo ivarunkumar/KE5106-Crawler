@@ -6,17 +6,21 @@ from selenium.webdriver.common.keys import Keys
 import json
 import pprint
 from time import sleep
-from TaskManager import TaskManager, Task
+from TaskManager import TaskManager, Task, BrowserTaskManager
 import SentimentAnalysis as SA
 import threading
 from BadgeInfo import fetchBadgeInfo, fetchBadgeInfoCallback
 from Persistence import DataManager
 
-gReviewTaskMgr = TaskManager("INFO", 20)
+gReviewerTaskMgr = TaskManager("REVIEWER", 30)
+gReviewTaskMgr = TaskManager("REVIEWS", 30)
+#browserTaskMgr = BrowserTaskManager ("MEMBER_INFO", 5)
 dataManager = DataManager()
 
-def getReviewDetails(reviewContainer):
+def getReviewDetails(payload):
     print("@getReviewDetails", threading.currentThread().getName())
+    userName = payload["userName"]
+    reviewContainer = payload["reviewContainer"]
     location = reviewContainer.find('div', {'class':'cs-review-location'})
     title = reviewContainer.find('a', {'class':'cs-review-title'})
     date = reviewContainer.find('div', {'class': 'cs-review-date'})
@@ -40,12 +44,15 @@ def getReviewDetails(reviewContainer):
     review=fullreviewContainer.findAll('div', {'class':'entry'})
     review=review[0].text.strip()
     r = SA.GetSentimentAnalysis(review)
-    data = r.json()
-    label = data['label']
-    neg = data['probability']['neg']
-    neu = data['probability']['neutral']
-    pos = data['probability']['pos']
-    print(label, neg, neu, pos)
+    label = "NA"
+    pos = neg = neu = 0.0
+    if r != None :
+        data = r.json()
+        label = data['label']
+        neg = data['probability']['neg']
+        neu = data['probability']['neutral']
+        pos = data['probability']['pos']
+    print(label, neg, neu, pos)        
     # Part Two
     HeaderContainer = soup.find('h1', {'id':'HEADING'})
     reviewtitle=HeaderContainer.find('div',{'id':'PAGEHEADING'})
@@ -63,22 +70,9 @@ def getReviewDetails(reviewContainer):
     elif l_LocContainer == 0:
         reviewloc = 'NA'
     
-    #     reviewOut = {}
-    #     reviewOut["reviewCateogory"] = getReviewCategory(location)
-    #     reviewOut["reviewDate"] =  date.text.strip()
-    #     reviewOut["reviewRating"] = getReviewRating(rating)
-    #     reviewOut["points"]=points.text
-    #     reviewOut["reviewId"] = reviewid
-    #     reviewOut["reviewloc"] = reviewloc
-    #     reviewOut["reviewentity"] = reviewentity
-    #     reviewOut["reviewtitle"] = reviewtitle
-    #     reviewOut["sentimentLabel"] = label
-    #     reviewOut["sentimentNegativity"] = neg
-    #     reviewOut["sentimentPositivity"] = pos
-    #     reviewOut["sentimentNeutrality"] = neu
-    
     entityId = i_title.split("-")[2]
     reviewDoc = {
+        "reviewerId" : userName,
         "entityId" : entityId, 
         "reviewId" : reviewid,
         "reviewDate" : date.text.strip(),
@@ -93,7 +87,8 @@ def getReviewDetails(reviewContainer):
             "positive" : pos,
             "negative" : neg,
             "neutral" : neu
-        }
+        },
+        "reviewText" : review
     }
     
     #reviewOut = (reviewid,reviewloc,reviewentity,reviewtitle,review,r)
@@ -128,25 +123,17 @@ def getReviewRating(rating):
     return rating
 
 def getMemberReviews(input):
-    print("@getMemberReviews", threading.currentThread().getName())
-    html = requests.get(input)
-    soup = BS(html.content, 'html.parser')
-    reviewContainer = soup.findAll('button', {'class':'cs-paginate-goto'})
+    print("@getMemberReviews", threading.currentThread().getName(), input)
+    driver = webdriver.Chrome()
+    driver.get(input)
+    pageSoup = BS(driver.page_source, 'html.parser')
+    reviewContainer = pageSoup.findAll('button', {'class':'cs-paginate-goto'})
     size = len(reviewContainer)
     pages = int(reviewContainer[size-1].text) #get num of pages
-    #driver = webdriver.PhantomJS()
-    driver = webdriver.Chrome()
-    #executable_path=r"chromedriver.exe")    
-    driver.get(input)
-    #html = requests.get(input)
-    #soup = BS(html.content, 'html.parser')
-    #reviewContainer = soup.findAll('li', {'class':'cs-review'})
-    pageSoup = BS(driver.page_source, 'html.parser')
-#     task = Task("BADGE_INFO", fetchBadgeInfo, fetchBadgeInfoCallback, pageSoup)
-#     gReviewTaskMgr.addTaskQ(task)
+    userName = input.split("/")[4]
     profileObj = fetchBadgeInfo(pageSoup)
     reviewerDoc = {
-        "userName" : profileObj.name,
+        "userName" : userName,
         "memberSince" : profileObj.agesince,
         "ageGroup" : profileObj.age,
         "gender" :  profileObj.sex,
@@ -172,12 +159,15 @@ def getMemberReviews(input):
         reviewSize = len(reviewContainer)
         for i in range(reviewSize):
             print ("@getMemberReviews >>>> ", reviewContainer[i])
-            task = Task("MEMBER_REVIEW", getReviewDetails, getReviewDetailsCallback, reviewContainer[i])
+            payload = {}
+            payload["userName"] = userName
+            payload["reviewContainer"] = reviewContainer[i]
+            task = Task("MEMBER_REVIEW", getReviewDetails, getReviewDetailsCallback, payload)
             gReviewTaskMgr.addTaskQ(task)
         next_page_elem = driver.find_element_by_id('cs-paginate-next')
         next_page_link = pageSoup.find('button', text='%d' % pageCount)
-        
-        if next_page_link and pageCount < 3:
+         
+        if next_page_elem : # and pageCount < 3:
             next_page_elem.click()
             pageCount += 1
             sleep(1)
@@ -185,8 +175,6 @@ def getMemberReviews(input):
             print ("********* REMOVE PAGE LIMIT *********** ")
             break
     driver.quit()
-    return (jsonMemberReviewList)
-    #return (jsonMemberReviewList,jsonDetailsReviewList)
     return None
 
 def getReviewDetailsCallback(futureObj) :
@@ -195,8 +183,8 @@ def getReviewDetailsCallback(futureObj) :
 
 
 def getMemberReviewsCallback(futureObj) :
-    Review = futureObj.result()
-    print("@getMemberReviewsCallback", threading.currentThread().getName(), Review)
+    #Review = futureObj.result()
+    print("@getMemberReviewsCallback", threading.currentThread().getName(), "Done")
     #jsonMemberReviewList.append(Review)
             
      #     pprint.pprint(MemberReviewData)
