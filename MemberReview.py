@@ -17,6 +17,25 @@ gReviewTaskMgr = TaskManager("REVIEWS", 10)
 
 dataManager = DataManager()
 
+def getStrPo(full, sub):
+    index = 0
+    sub_index = 0
+    position = -1
+    for ch_i,ch_f in enumerate(full) :
+        if ch_f.lower() != sub[sub_index].lower():
+            position = -1
+            sub_index = 0
+        if ch_f.lower() == sub[sub_index].lower():
+            if sub_index == 0 :
+                position = ch_i
+
+            if (len(sub) - 1) <= sub_index :
+                break
+            else:
+                sub_index += 1
+
+    return position
+
 def getReviewDetails(payload):
     print("@getReviewDetails", threading.currentThread().getName())
     userName = payload["userName"]
@@ -33,55 +52,70 @@ def getReviewDetails(payload):
     points = reviewContainer.find('div', {'class': 'cs-points'})
     i_loc= location.find('a')['href']
     i_title=title['href']
+    start = i_title.find('-r') + 1
+    end = i_title.find('.html', start)
+    test_rid=i_title[start:end]
+    rstart = test_rid.find('r')
+    rend = test_rid.find('-', rstart)
+    if rend==-1:
+        rid=i_title.rsplit('-', 1)[1]
+    else:
+        rid=test_rid[rstart:rend]
     p_title='https://www.tripadvisor.com.sg'+i_title
     html_title = requests.get(p_title)
     soup = BS(html_title.content, 'html.parser')
-    # Part One
     fullreviewContainer = soup.find('div', {'class':'innerBubble'})
-    reviewid=fullreviewContainer.find('p')['id']
-    reviewid=reviewid.strip()
-    #review=fullreviewContainer.findAll('p', {'property':'reviewBody'}) #not all review has this tag
-    review=fullreviewContainer.findAll('div', {'class':'entry'})
-    review=review[0].text.strip()
-    r = SA.GetSentimentAnalysis(review)
-    label = "NA"
-    pos = neg = neu = 0.0
-    if r != None :
-        data = r.json()
-        label = data['label']
-        neg = data['probability']['neg']
-        neu = data['probability']['neutral']
-        pos = data['probability']['pos']
-    print(label, neg, neu, pos)        
-    # Part Two
-    HeaderContainer = soup.find('h1', {'id':'HEADING'})
-    reviewtitle=HeaderContainer.find('div',{'id':'PAGEHEADING'})
-    if (reviewtitle != None) :
-        reviewtitle=reviewtitle.text.strip()
-    reviewentity=HeaderContainer.find('a',{'href':i_loc})
-    reviewentity=reviewentity.text.strip()
-    # Part Three
-    LocContainer = soup.findAll('span',{'class':'format_address'})
-    l_LocContainer=len(LocContainer)
-    if l_LocContainer > 0:
-        reviewloc=LocContainer[0].text.split()
-        reviewloc=reviewloc[-1].strip()
-        re.sub(r'\(.*?\)', '',reviewloc)
-    elif l_LocContainer == 0:
-        reviewloc = 'NA'
-    
+    if rend == -1 or fullreviewContainer.findAll('div', {'class':'entry'}) is None:
+        r='NA'
+        review='NA'
+        reviewloc='NA'
+        label = "NA"
+        pos = neg = neu = 0.0
+    else:
+        # Part One
+        #fullreviewContainer = soup.find('div', {'class':'innerBubble'})
+        #reviewid=fullreviewContainer.find('p')['id']
+        #reviewid=reviewid.strip()
+        #review=fullreviewContainer.findAll('p', {'property':'reviewBody'}) #not all review has this tag
+        review=fullreviewContainer.findAll('div', {'class':'entry'})
+        review=review[0].text.strip()
+        r = SA.GetSentimentAnalysis(review)
+        label = "NA"
+        pos = neg = neu = 0.0
+        if r != None :
+            data = r.json()
+            label = data['label']
+            neg = data['probability']['neg']
+            neu = data['probability']['neutral']
+            pos = data['probability']['pos']
+            print(label, neg, neu, pos)
+        # Part Two
+        #HeaderContainer = soup.find('h1', {'id':'HEADING'})
+        #reviewtitle=HeaderContainer.find('div',{'id':'PAGEHEADING'})
+        #if (reviewtitle != None) :
+        #    reviewtitle=reviewtitle.text.strip()
+        #    reviewentity=HeaderContainer.find('a',{'href':i_loc})
+        #    reviewentity=reviewentity.text.strip()
+        # Part Three
+        reviewloc='NA'
+        if soup.find('span',{'class':'country-name'}) is None:
+            print('NoCountryNameFound')
+        else:
+            LocContainer = soup.find('span',{'class':'country-name'})
+            #print(LocContainer)
+            reviewloc=LocContainer.text
     entityId = i_title.split("-")[2]
     reviewDoc = {
         "reviewerId" : userName,
         "entityId" : entityId, 
-        "reviewId" : reviewid,
+        "reviewId" : rid,
         "reviewDate" : date.text.strip(),
         "reviewLocation" : reviewloc,
         "category" : getReviewCategory(location),
         "rating" : getReviewRating(rating),
         "points" : points.text.strip(),
         "helpfulVote" : vote,
-        "entityName" : reviewentity,
+        "entityName" : location.text,
         "sentimentScore" : {
             "label" : label,
             "positive" : pos,
