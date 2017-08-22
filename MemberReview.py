@@ -12,9 +12,9 @@ import threading
 from BadgeInfo import fetchBadgeInfo, fetchBadgeInfoCallback
 from Persistence import DataManager
 
-gReviewerTaskMgr = TaskManager("REVIEWER", 30)
-gReviewTaskMgr = TaskManager("REVIEWS", 30)
-#browserTaskMgr = BrowserTaskManager ("MEMBER_INFO", 5)
+gReviewerTaskMgr = TaskManager("REVIEWER", 10)
+gReviewTaskMgr = TaskManager("REVIEWS", 10)
+
 dataManager = DataManager()
 
 def getReviewDetails(payload):
@@ -92,7 +92,8 @@ def getReviewDetails(payload):
     }
     
     #reviewOut = (reviewid,reviewloc,reviewentity,reviewtitle,review,r)
-    print ("@getReviewDetails", reviewDoc)        
+    print ("@getReviewDetails", reviewDoc)
+    dataManager.saveReview(reviewDoc)        
     return reviewDoc 
 
 def getReviewCategory(location):
@@ -178,13 +179,13 @@ def getMemberReviews(input):
     return None
 
 def getReviewDetailsCallback(futureObj) :
-    print("@getReviewDetailsCallBack", threading.currentThread().getName(), futureObj.result())
-    dataManager.saveReview(futureObj.result())
+    print("@getReviewDetailsCallBack", threading.currentThread().getName(), futureObj.result()["reviewId"] + " saved.")
+
 
 
 def getMemberReviewsCallback(futureObj) :
     #Review = futureObj.result()
-    print("@getMemberReviewsCallback", threading.currentThread().getName(), "Done")
+    print("@getMemberReviewsCallback", threading.currentThread().getName() +" Done")
     #jsonMemberReviewList.append(Review)
             
      #     pprint.pprint(MemberReviewData)

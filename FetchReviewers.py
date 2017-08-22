@@ -43,7 +43,7 @@ def fMark_00(vUrl, vParameter1, vParameter2a, vParameter2b) :
     
     # ------- Total Number of Pages
     gStartPage = 1
-    gTotalPages = 100 # 1176 48 pages
+    gTotalPages = 20 # 1176 48 pages
     lSeleniumDriver.get(vUrl)
     # empty array list
     vContainer = [] # Multidimensional array # 0 - vOverallRatingContainer, 1 - vMainMemberContainer
