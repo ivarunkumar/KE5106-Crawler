@@ -17,6 +17,9 @@ def fetchBadgeInfo(soup):
     ageSince2 =ageSince[0].find_all("p")
     ASince = ageSince2[0].get_text().strip()
     ASince = ASince[-4:]
+    if ASince == 'onth':
+        ASince = '2017'
+    
     Age = ''
     sex=''
 
@@ -35,6 +38,8 @@ def fetchBadgeInfo(soup):
             sex='male'
             Age =Age.replace('male', '')
             Age = Age.replace('year old', '')
+
+        
 
     except:
         Age = ''
@@ -99,7 +104,7 @@ def fetchBadgeInfo(soup):
 
         print (Largebadgename)
 
-    p = Profile(Name,ASince,Age,sex,htown,points,level,tagBlocklist,Largebadge,tBadges,tBadgesLink)
+    p = Profile(Name.strip(), ASince.strip(), Age.strip(), sex.strip(), htown.strip(), points.strip(),level.strip(), tagBlocklist, Largebadge, tBadges.strip(), tBadgesLink.strip())
     return p
 
 def fetchBadgeInfoCallback(futureObj):
