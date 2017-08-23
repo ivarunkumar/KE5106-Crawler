@@ -12,29 +12,91 @@ import threading
 from BadgeInfo import fetchBadgeInfo, fetchBadgeInfoCallback
 from Persistence import DataManager
 
-gReviewerTaskMgr = TaskManager("REVIEWER", 10)
-gReviewTaskMgr = TaskManager("REVIEWS", 10)
+gReviewerTaskMgr = TaskManager("REVIEWER", 5)
+gReviewTaskMgr = TaskManager("REVIEWS")
 
+gReviewerDriverCache = {}
+gReviewDriverCache = {} 
 dataManager = DataManager()
 
-def getStrPo(full, sub):
-    index = 0
-    sub_index = 0
-    position = -1
-    for ch_i,ch_f in enumerate(full) :
-        if ch_f.lower() != sub[sub_index].lower():
-            position = -1
-            sub_index = 0
-        if ch_f.lower() == sub[sub_index].lower():
-            if sub_index == 0 :
-                position = ch_i
-
-            if (len(sub) - 1) <= sub_index :
-                break
-            else:
-                sub_index += 1
-
-    return position
+# def getReviewDetails(payload):
+#     print("@getReviewDetails", threading.currentThread().getName())
+#     userName = payload["userName"]
+#     reviewContainer = payload["reviewContainer"]
+#     location = reviewContainer.find('div', {'class':'cs-review-location'})
+#     title = reviewContainer.find('a', {'class':'cs-review-title'})
+#     date = reviewContainer.find('div', {'class': 'cs-review-date'})
+#     rating = reviewContainer.find('div', {'class': 'cs-review-rating'})
+#     votes = reviewContainer.find('div', {'class': 'cs-review-helpful-votes'})
+#     if(votes): #class will not appear if no votes
+#         vote = votes.text.strip()
+#     else:
+#         vote = 0
+#     points = reviewContainer.find('div', {'class': 'cs-points'})
+#     i_loc= location.find('a')['href']
+#     i_title=title['href']
+#     p_title='https://www.tripadvisor.com.sg'+i_title
+#     html_title = requests.get(p_title)
+#     soup = BS(html_title.content, 'html.parser')
+#     # Part One
+#     fullreviewContainer = soup.find('div', {'class':'innerBubble'})
+#     reviewid=fullreviewContainer.find('p')['id']
+#     reviewid=reviewid.strip()
+#     #review=fullreviewContainer.findAll('p', {'property':'reviewBody'}) #not all review has this tag
+#     review=fullreviewContainer.findAll('div', {'class':'entry'})
+#     review=review[0].text.strip()
+#     r = SA.GetSentimentAnalysis(review)
+#     label = "NA"
+#     pos = neg = neu = 0.0
+#     if r != None :
+#         data = r.json()
+#         label = data['label']
+#         neg = data['probability']['neg']
+#         neu = data['probability']['neutral']
+#         pos = data['probability']['pos']
+#     #print(label, neg, neu, pos)        
+#     # Part Two
+#     HeaderContainer = soup.find('h1', {'id':'HEADING'})
+#     reviewtitle=HeaderContainer.find('div',{'id':'PAGEHEADING'})
+#     if (reviewtitle != None) :
+#         reviewtitle=reviewtitle.text.strip()
+#     reviewentity=HeaderContainer.find('a',{'href':i_loc})
+#     reviewentity=reviewentity.text.strip()
+#     # Part Three
+#     LocContainer = soup.findAll('span',{'class':'format_address'})
+#     l_LocContainer=len(LocContainer)
+#     if l_LocContainer > 0:
+#         reviewloc=LocContainer[0].text.split()
+#         reviewloc=reviewloc[-1].strip()
+#         re.sub(r'\(.*?\)', '',reviewloc)
+#     elif l_LocContainer == 0:
+#         reviewloc = 'NA'
+#     
+#     entityId = i_title.split("-")[2]
+#     reviewDoc = {
+#         "reviewerId" : userName,
+#         "entityId" : entityId, 
+#         "reviewId" : reviewid,
+#         "reviewDate" : date.text.strip(),
+#         "reviewLocation" : reviewloc,
+#         "category" : getReviewCategory(location),
+#         "rating" : getReviewRating(rating),
+#         "points" : points.text.strip(),
+#         "helpfulVote" : vote,
+#         "entityName" : reviewentity,
+#         "sentimentScore" : {
+#             "label" : label,
+#             "positive" : pos,
+#             "negative" : neg,
+#             "neutral" : neu
+#         },
+#         "reviewText" : review
+#     }
+#     
+#     #reviewOut = (reviewid,reviewloc,reviewentity,reviewtitle,review,r)
+#     print ("@getReviewDetails", reviewDoc)
+#     dataManager.saveReview(reviewDoc)        
+#     return reviewDoc 
 
 def getReviewDetails(payload):
     print("@getReviewDetails", threading.currentThread().getName())
@@ -157,7 +219,9 @@ def getReviewRating(rating):
         rating = 0
     return rating
 
-def getMemberReviews(input):
+def getMemberReviews(payload):
+    input = payload["profileUrl"]
+    ratingDistribution = payload["ratingDistribution"]
     print("@getMemberReviews", threading.currentThread().getName(), input)
     driver = webdriver.Chrome()
     driver.get(input)
@@ -179,8 +243,16 @@ def getMemberReviews(input):
         "badge" : {
             "lastBadge" : profileObj.Largebadge,
             "totalBadges" : profileObj.totalBadges
+        },
+        "ratingDistribution" : {
+            "excellent" : ratingDistribution[0].text.strip(),
+            "veryGood" : ratingDistribution[1].text.strip(),
+            "average" : ratingDistribution[2].text.strip(),
+            "poor" : ratingDistribution[3].text.strip(),
+            "terrible" : ratingDistribution[4].text.strip(),
         }
     }
+    print("@getMemberReviews", reviewerDoc)
     dataManager.saveReviewer(reviewerDoc)
     
     jsonMemberReviewList = []
@@ -193,7 +265,6 @@ def getMemberReviews(input):
         reviewContainer = pageSoup.findAll('li', {'class':'cs-review'})
         reviewSize = len(reviewContainer)
         for i in range(reviewSize):
-            print ("@getMemberReviews >>>> ", reviewContainer[i])
             payload = {}
             payload["userName"] = userName
             payload["reviewContainer"] = reviewContainer[i]
@@ -213,13 +284,13 @@ def getMemberReviews(input):
     return None
 
 def getReviewDetailsCallback(futureObj) :
-    print("@getReviewDetailsCallBack", threading.currentThread().getName(), futureObj.result()["reviewId"] + " saved.")
+    print("@getReviewDetailsCallBack", threading.currentThread().getName(), "Completed")
 
 
 
 def getMemberReviewsCallback(futureObj) :
     #Review = futureObj.result()
-    print("@getMemberReviewsCallback", threading.currentThread().getName() +" Done")
+    print("@getMemberReviewsCallback", threading.currentThread().getName(), "Completed")
     #jsonMemberReviewList.append(Review)
             
      #     pprint.pprint(MemberReviewData)

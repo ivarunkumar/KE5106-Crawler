@@ -42,7 +42,7 @@ def fMark_00(vUrl, vParameter1, vParameter2a, vParameter2b) :
     lSeleniumDriver = webdriver.Chrome()
     
     # ------- Total Number of Pages
-    gStartPage = 1
+    gStartPage = 41
     gTotalPages = 20 # 1176 48 pages
     lSeleniumDriver.get(vUrl)
     # empty array list
@@ -88,9 +88,10 @@ def fMark_00(vUrl, vParameter1, vParameter2a, vParameter2b) :
     vOverallRatingContainer[5] = int(vOverallRatingContainer[0]) + int(vOverallRatingContainer[1]) + int(vOverallRatingContainer[2]) + int(vOverallRatingContainer[3]) + int(vOverallRatingContainer[4])
     
     vContainer.append(vOverallRatingContainer)
-    
+    entityId = vUrl.split("-")[2]
     entityName = vSoup.find('h1', {'id':'HEADING'}).text.strip()
     entity = {
+        "entityId" : entityId,
         "name" : entityName,
         "rating" : {
             "excellent" : vOverallRatingContainer[0],
@@ -124,7 +125,7 @@ def fMark_00(vUrl, vParameter1, vParameter2a, vParameter2b) :
             # f.close()
             print("Page ",vCount," of ",gTotalPages," completed extraction")
         else:
-            print("Page ",vCount," of ",gTotalPages," skipped extraction")
+            print("Page ",pageNum," skipped extraction")
             # --- Get Next Button
 
         gNextButton = lSeleniumDriver.find_element_by_xpath("//*[@class='nav next taLnk ']")
@@ -161,6 +162,8 @@ def fetchReviewerInfo(htmlCode) :
         vUsername = vUsername.replace("/members/","")
         vMemberProfile = "https://www.tripadvisor.com.sg/members/" + vUsername
         
+        reviewDistribution = vOverlay.findAll("span", {"class" : "rowCountReviewEnhancements rowCellReviewEnhancements"})
+        
         #Build member dictionary
         memberData = {}
         memberData["displayName"] = vDisplayName
@@ -168,6 +171,7 @@ def fetchReviewerInfo(htmlCode) :
         memberData["profileURL"] = vMemberProfile
         memberData["reviewID"] = vReviewSource
         memberData["reviewURL"] = vReviewSourceURL
+        memberData["ratingDistribution"] = reviewDistribution
         reviewListOut.append(memberData)
     #print(reviewListOut)
     return reviewListOut
@@ -182,7 +186,10 @@ def fetchReviewerInfoCallback(futureObj) :
         #persistReviewProfile(profile)
         profileUrl = profile['profileURL']
         print ("Processing MemberReview for", profile["userName"], profileUrl)
-        task = Task("MEMBER_INFO", getMemberReviews, getMemberReviewsCallback, profileUrl)
+        payload= {}
+        payload["profileUrl"] = profileUrl
+        payload["ratingDistribution"] = profile["ratingDistribution"]
+        task = Task("MEMBER_INFO", getMemberReviews, getMemberReviewsCallback, payload)
         gReviewerTaskMgr.addTaskQ(task)
     log("@fetchReviewerInfoCallback", "Done")
 
@@ -194,7 +201,7 @@ def log(key, content):
     print(key, threading.currentThread().getName(), content)
     
 def main():
-    #gReviewerTaskMgr = TaskManager("INFO")
+    gReviewerTaskMgr = TaskManager("REVIEWER")
     fetchReviewers(WEB_TARGET)
     #stopTask = Task("END_WORKER", None, None, None)
     #gTaskMgr.addTaskQ(stopTask)

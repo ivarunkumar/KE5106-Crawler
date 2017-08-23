@@ -1,4 +1,4 @@
-from pymongo import MongoClient
+from pymongo import MongoClient, errors
 import json
 
 class DataManager :
@@ -7,23 +7,38 @@ class DataManager :
         pass
     
     def saveReview (self, review) :
-        print ("@saveReview", review)
-        DataManager.tripAdvisorDB.Reviews.insert_one(review)
+        try:
+            print ("@saveReview", review)
+            DataManager.tripAdvisorDB.Reviews.insert_one(review)
+        except errors.DuplicateKeyError as e:
+            print(e)
 
     def saveReviews (self, reviews) :
-        print ("@saveReviews", reviews)
-        DataManager.tripAdvisorDB.Reviews.insert_many(reviews)
+        try:
+            print ("@saveReviews", reviews)
+            DataManager.tripAdvisorDB.Reviews.insert_many(reviews)
+        except errors.DuplicateKeyError as e:
+            print(e)
         
     def saveReviewer (self, reviewer) :
-        print ("@saveReview", reviewer)
-        DataManager.tripAdvisorDB.Reviewers.insert_one(reviewer)
+        try:
+            print ("@saveReview", reviewer)
+            DataManager.tripAdvisorDB.Reviewers.insert_one(reviewer)
+        except errors.DuplicateKeyError as e:
+            print(e)
 
     def saveReviewers (self, reviewers) :
-        print ("@saveReviewers", reviewers)
-        DataManager.tripAdvisorDB.Reviewers.insert_many(reviewers)          
+        try:
+            print ("@saveReviewers", reviewers)
+            DataManager.tripAdvisorDB.Reviewers.insert_many(reviewers)          
+        except errors.DuplicateKeyError as e:
+            print(e)
         
     def saveEntity (self, entity) :
-        print ("@saveEntity", entity)
-        DataManager.tripAdvisorDB.Entities.insert_one(entity)
+        try:
+            print ("@saveEntity", entity)
+            DataManager.tripAdvisorDB.Entities.insert_one(entity)
+        except errors.DuplicateKeyError as e:
+            print(e)
 
 

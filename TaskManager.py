@@ -33,7 +33,7 @@ class TaskManager (object) :
     def addTask(self, taskFn, callbackFn, args) :
         ft = self.gThreadPool.submit(taskFn, args)
         ft.add_done_callback(callbackFn)
-        print("Task enqueued")
+        #print("Task enqueued")
         
     def addTaskQ(self, task):
         self.taskQueue.put(task)
