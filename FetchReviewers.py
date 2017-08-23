@@ -38,12 +38,12 @@ dataManager = DataManager()
 
 # ------- Function Calls
 # HTML Convert to Parse-Tree Search Mark-00
-def fMark_00(vUrl, vParameter1, vParameter2a, vParameter2b) :
+def fMark_00(vUrl, startPageNum, numPages, vParameter1, vParameter2a, vParameter2b) :
     lSeleniumDriver = webdriver.Chrome()
     
     # ------- Total Number of Pages
-    gStartPage = 41
-    gTotalPages = 20 # 1176 48 pages
+    gStartPage = startPageNum
+    gTotalPages = numPages # 1176 48 pages
     lSeleniumDriver.get(vUrl)
     # empty array list
     vContainer = [] # Multidimensional array # 0 - vOverallRatingContainer, 1 - vMainMemberContainer
@@ -194,18 +194,18 @@ def fetchReviewerInfoCallback(futureObj) :
     log("@fetchReviewerInfoCallback", "Done")
 
 
-def fetchReviewers(targetURL) :  
-    vYggdrasil = fMark_00(targetURL, 'div', 'id', 'taplc_location_detail_two_column_top_0')
+def fetchReviewers(targetURL, startPageNum, numPages) :  
+    vYggdrasil = fMark_00(targetURL, startPageNum, numPages, 'div', 'id', 'taplc_location_detail_two_column_top_0')
 
 def log(key, content):
     print(key, threading.currentThread().getName(), content)
     
-def main():
+def main(url, startPageNum, numPages):
     gReviewerTaskMgr = TaskManager("REVIEWER")
-    fetchReviewers(WEB_TARGET)
+    fetchReviewers(url, startPageNum, numPages)
     #stopTask = Task("END_WORKER", None, None, None)
     #gTaskMgr.addTaskQ(stopTask)
     #gReviewTaskMgr.addTaskQ(stopTask)
     
 if __name__ == '__main__':
-    main()   
+    main(WEB_TARGET, 40, 1)   

@@ -1,0 +1,3 @@
+mongoimport --db TripAdvisor --collection Entities --file Entities.json
+mongoimport --db TripAdvisor --collection Reviewers --file Reviewers.json
+mongoimport --db TripAdvisor --collection Reviews --file Reviews.json

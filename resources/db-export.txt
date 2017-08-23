@@ -1,0 +1,3 @@
+mongoexport --db TripAdvisor --collection Entities --out Entities.json
+mongoexport --db TripAdvisor --collection Reviewers --out Reviewers.json
+mongoexport --db TripAdvisor --collection Reviews --out Reviews.json

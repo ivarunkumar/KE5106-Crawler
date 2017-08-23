@@ -23,7 +23,7 @@ class TaskManager (object) :
         while True:
             #q.get() blocks the thread
             task = self.taskQueue.get()
-            print ("TaskManager.worker: dequeuing", task.taskName)
+            print ("TaskManager.worker: dequeuing", task.taskName, "Items in queue", self.taskQueue.qsize())
             if task.taskName == "END_WORKER":
                 print ("TaskManager.worker terminated")
                 break
