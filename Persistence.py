@@ -41,4 +41,29 @@ class DataManager :
         except errors.DuplicateKeyError as e:
             print(e)
 
+    def readReviews(self, condition): 
+        result = DataManager.tripAdvisorDB.Reviews.find(condition)
+        return result
+    
+    def getReviewsAndReviewer(self, reviewerId):
+        out = DataManager.tripAdvisorDB.Reviews.aggregate([
+            {"$match": {"sentimentScore.label": {"$ne":"NA"}}},
+            {"$match": {"reviewerId" : reviewerId}},
+            {"$lookup" : {"from":"Reviewers","localField":"reviewerId", "foreignField" : "userName", "as" : "reviewer" }}
+            ])
+        
+        return out
+    
+    def getReviewer(self, reviewerId): 
+        result = DataManager.tripAdvisorDB.Reviewers.find({"userName" : reviewerId})
+        return result
+    
+    def getAllReviewers (self):
+        return DataManager.tripAdvisorDB.Reviewers.find().limit(10);     
+    
+    def getReviewerTransformed(self, reviewerId):
+        return DataManager.tripAdvisorDB.ReviewersTransform.find({"_id" : reviewerId}) 
 
+    def getReviewerAggregate(self, reviewerId):
+        return DataManager.tripAdvisorDB.ReviewsAggr.find({"_id" : reviewerId}) 
+        

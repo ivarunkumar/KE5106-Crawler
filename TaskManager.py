@@ -21,6 +21,7 @@ class TaskManager (object) :
         
     def worker(self):
         while True:
+            #self.gThreadPool._work_queue.qsize()
             #q.get() blocks the thread
             task = self.taskQueue.get()
             print ("TaskManager.worker: dequeuing", task.taskName, "Items in queue", self.taskQueue.qsize())

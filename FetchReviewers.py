@@ -1,3 +1,4 @@
+import sys
 # ------- Import Library
 import re
 import requests
@@ -208,4 +209,13 @@ def main(url, startPageNum, numPages):
     #gReviewTaskMgr.addTaskQ(stopTask)
     
 if __name__ == '__main__':
-    main(WEB_TARGET, 40, 1)   
+    print (len(sys.argv))
+    if (len(sys.argv) == 2) :
+        main(sys.argv[1], 1, 20)
+    elif (len(sys.argv) == 3) :
+        main(sys.argv[1], int(sys.argv[2]), 20)
+    elif (len(sys.argv) == 4) :
+        main(sys.argv[1], int(sys.argv[2]), int(sys.argv[3]))
+    else:
+        main(WEB_TARGET, 1, 20)
+    #main(WEB_TARGET, 40, 1)   
