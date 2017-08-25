@@ -3,6 +3,7 @@ import sklearn
 import numpy as np
 import pandas as pd
 from sklearn.svm import SVC
+from sklearn.linear_model import LogisticRegression
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.model_selection import StratifiedShuffleSplit
 from sklearn.cross_validation import train_test_split
@@ -23,7 +24,7 @@ import csv
 ########
 
 def fTrainDataProcess (csv):
-	column_names = ['userName','memberSince','ageGroup','gender','homeTown','points','rating','Label']
+	column_names = ['1','2,','3','4,','5','6','7','8','9','10','11','12,','13','14,','15','16','17','18','19','20','21','22,','23','24','25','26','27','28','29','30','31','32,','33','34','35','36','37','38','39','40','41','42']
 	df = pd.read_csv(csv, delimiter=',', encoding="ISO-8859-1", header=None, sep=',', names=column_names)
 
 	for column in df.columns:
@@ -33,13 +34,13 @@ def fTrainDataProcess (csv):
 
 	array = df.values
 
-	X = array[:,0:7]
-	y = array[:,7]
+	X = array[:,0:41]
+	y = array[:,41]
 	scaler = MinMaxScaler(feature_range=(0, 1))
 	rescaledX = scaler.fit_transform(X)
 	# summarize transformed data
 	np.set_printoptions(precision=3)
-	print(rescaledX[0:7,:])
+	print(rescaledX[0:41,:])
 
 	print("XXXXX:",rescaledX)
 	print("YYYYYY:",y)	
@@ -72,6 +73,7 @@ def fML_SVM_Load_TestModel(i): # Data Set
 	vTesting = np.array(vTesting).reshape((1, -1))
 	
 	vPredProb = vSVMML.predict(vTesting)
+	#vPredProb = vSVMML.predict_proba(vTesting)
 	print("test ",vPredProb)
 	return vPredProb
 
@@ -89,9 +91,10 @@ def fML_SVM_Load_TestModel(i): # Data Set
 # Run the function to make prediction for untested data
 #vTesting = ['20','014','20','20','20','0','2']
 #fML_SVM_Load_TestModel(vTesting)
-
-#fML_SVM_Load_TestModel(vData)
-fTrainDataProcess("Input_01.csv")
+#vData = ['3','0','0','2677','4','20','3','15','5','1','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','24','1','9','10','5','0','0','8','1','15','0']
+vData = ['5','4','2','13631','6','39','18','48','34','8','1','1','0','0','1','0','1','0','0','0','0','0','1','0','0','0','0','0','0','0','109','34','56','32','21','0','0','43','22','44','0']
+fML_SVM_Load_TestModel(vData)
+#fTrainDataProcess("Input_01.csv")
 
 
 
