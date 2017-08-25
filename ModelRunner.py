@@ -162,11 +162,16 @@ if __name__ == '__main__':
 #         print(x)
 
     #out = prepareModelInputByReviewer("MisterGong")
+    m = 0
     out = prepareModelInput({})
     for r in out:
         print("<<<<<", r)
         x= r["predictors"]
         print("running model")
         y = fML_SVM_Load_TestModel(x)
+        print(y[1][0][1])
+        if (y[1][0][1] > m) :
+            m = y[1][0][1]
         print("got", y, "actual", r["class"])
       
+    print ("golden #", m)

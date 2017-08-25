@@ -80,7 +80,7 @@ def fML_SVM_Load_TestModel(i): # Data Set
 	
 	
 	
-	return vPredProb1, vPredProb2
+	return (vPredProb1, vPredProb2)
 
 #---------------------- Call Functions ----------------------
 
