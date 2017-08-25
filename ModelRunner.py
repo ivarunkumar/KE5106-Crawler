@@ -3,7 +3,7 @@ import json
 from Persistence import DataManager
 from FetchReviewers import reviewTaskMgr
 from pymongo.cursor import Cursor
-#from ML_SVM007 import fML_SVM_Load_TestModel
+from ML_SVM007 import fML_SVM_Load_TestModel
 import datetime
 
 AGE_GROUP = { 
@@ -153,14 +153,20 @@ def runModelForEntity(entityId):
               
 if __name__ == '__main__':
     #getReviewsByEntity("d2439664")
-    #getReviewsAndReviewer("MisterGong")
-    #out = prepareModelInputByReviewer("MisterGong")
-    out = prepareModelInput({})
-#     #out = prepareModelInputByReviewer("MisterGong")
+# 
+#     out = prepareModelInput({})
 #     print("----------------------")
 #     X = []
 #     Y = []
 #     for x in out:
-#         X.append(x["predictors"])
-#         Y.extend(x)
-    print(out)
+#         print(x)
+
+
+    out = prepareModelInputByReviewer("MisterGong")
+    print("<<<<<", out)
+    x= out[0]["predictors"]
+    print(x)
+    print("running model")
+    y = fML_SVM_Load_TestModel(x)
+    print("got", y)
+      
