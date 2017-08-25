@@ -72,10 +72,15 @@ def fML_SVM_Load_TestModel(i): # Data Set
 	vTesting = i
 	vTesting = np.array(vTesting).reshape((1, -1))
 	
-	vPredProb = vSVMML.predict(vTesting)
-	#vPredProb = vSVMML.predict_proba(vTesting)
-	print("test ",vPredProb)
-	return vPredProb
+	vPredProb1 = vSVMML.predict(vTesting)
+	vPredProb2 = vSVMML.predict_proba(vTesting)
+	print("Predicted :  ",vPredProb1)
+	print("Predict Probabilities : ",vPredProb2)
+	
+	
+	
+	
+	return vPredProb1, vPredProb2
 
 #---------------------- Call Functions ----------------------
 
@@ -91,10 +96,12 @@ def fML_SVM_Load_TestModel(i): # Data Set
 # Run the function to make prediction for untested data
 #vTesting = ['20','014','20','20','20','0','2']
 #fML_SVM_Load_TestModel(vTesting)
+#vData = ['5','4','2','13631','6','39','18','48','34','8','1','1','0','0','1','0','1','0','0','0','0','0','1','0','0','0','0','0','0','0','109','34','56','32','21','0','0','43','22','44','0']
+#vData = ['9','3','2','11343','6','37','19','38','16','4','2','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','79','28','58','10','9','0','2','30','16','33','0']
 #vData = ['3','0','0','2677','4','20','3','15','5','1','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','24','1','9','10','5','0','0','8','1','15','0']
-vData = ['5','4','2','13631','6','39','18','48','34','8','1','1','0','0','1','0','1','0','0','0','0','0','1','0','0','0','0','0','0','0','109','34','56','32','21','0','0','43','22','44','0']
-fML_SVM_Load_TestModel(vData)
-#fTrainDataProcess("Input_01.csv")
+#vData = ['5','4','2','13631','6','39','18','48','34','8','1','1','0','0','1','0','1','0','0','0','0','0','1','0','0','0','0','0','0','0','109','34','56','32','21','0','0','43','22','44','0']
+#fML_SVM_Load_TestModel(vData)
+#fTrainDataProcess("R2Dumping_01.csv")
 
 
 
