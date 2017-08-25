@@ -2,7 +2,8 @@ from pymongo import MongoClient, errors
 import json
 
 class DataManager :
-    tripAdvisorDB = MongoClient().get_database(name = "TripAdvisor")
+    mongoClient = MongoClient()
+    tripAdvisorDB = mongoClient.get_database(name = "TripAdvisor")
     def __init__ (self) :
         pass
     
@@ -59,7 +60,7 @@ class DataManager :
         return result
     
     def getAllReviewers (self, condition):
-        return DataManager.tripAdvisorDB.Reviewers.find(condition);     
+        return DataManager.tripAdvisorDB.Reviewers.find(condition)   
     
     def getReviewerTransformed(self, reviewerId):
         return DataManager.tripAdvisorDB.ReviewersTransform.find({"_id" : reviewerId}) 
@@ -67,5 +68,5 @@ class DataManager :
     def getReviewerAggregate(self, reviewerId):
         return DataManager.tripAdvisorDB.ReviewsAggr.find({"_id" : reviewerId}) 
     
-#     def disconnection(self): 
-#         DataManager.tripAdvisorDB. 
+    def disconnect(self): 
+        DataManager.mongoClient.close() 
