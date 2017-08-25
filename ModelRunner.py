@@ -3,8 +3,28 @@ import json
 from Persistence import DataManager
 from FetchReviewers import reviewTaskMgr
 from pymongo.cursor import Cursor
-from MLModel_SVM import fML_SVM_Load_TestModel
+#from MLModel_SVM import fML_SVM_Load_TestModel
+import datetime
 
+AGE_GROUP = { 
+    ""  : 0,
+    "13-17" : 1,
+    "18-24" : 2,
+    "25-34" : 3,
+    "35-49" : 4,
+    "50-64" : 5,
+    "65+":6
+    }
+
+def getMemberAge(value): 
+    if (value == "" or value == None or value == "week") :
+        return 0
+    
+    memSince = int(value)
+    now = datetime.datetime.now()
+    return (now.year - memSince)
+    
+     
 def getReviewsByEntity(entityId) :
     dataMgr = DataManager()
     out = dataMgr.readReviews({"sentimentScore.label" : {"$ne": "NA"}, "entityId" : entityId})
@@ -17,7 +37,7 @@ def getReviewsAndReviewer(reviewerId):
     for o in out:
         print (o["entityName"])
   
-  
+    dataMgr.disconnect()
 def prepareModelInputByReviewer(reviewerId): 
     return prepareModelInput({"userName" : reviewerId})
                        
@@ -27,21 +47,32 @@ def prepareModelInput(condition):
     trainingData = []
     for reviewer in reviewers :
         predictors = []
+        
+        gender = 0
+        if reviewer["gender"] == "male" : 
+            gender = 1
+        elif reviewer["gender"] == "female" :
+            gender = 2
+        
+        ageGroup = AGE_GROUP[reviewer["ageGroup"]]
+        if ageGroup == None :
+            ageGroup = 0
+            
         reviewerModel1 = [
         #print(
             #reviewer["userName"],
-            reviewer["memberSince"], 
-            reviewer["ageGroup"],
-            reviewer["gender"],
+            getMemberAge(reviewer["memberSince"]), 
+            ageGroup,
+            gender,
             #reviewer["homeTown"],
-            reviewer["points"],
-            reviewer["rating"],
-            reviewer["badge"]["totalBadges"],
-            reviewer["ratingDistribution"]["excellent"],
-            reviewer["ratingDistribution"]["veryGood"],
-            reviewer["ratingDistribution"]["average"],
-            reviewer["ratingDistribution"]["poor"],
-            reviewer["ratingDistribution"]["terrible"]
+            int(reviewer["points"].replace(',','')),
+            int(reviewer["rating"]),
+            int(reviewer["badge"]["totalBadges"]),
+            int(reviewer["ratingDistribution"]["excellent"]),
+            int(reviewer["ratingDistribution"]["veryGood"]),
+            int(reviewer["ratingDistribution"]["average"]),
+            int(reviewer["ratingDistribution"]["poor"]),
+            int(reviewer["ratingDistribution"]["terrible"])
             ]
         
         predictors.extend(reviewerModel1)
@@ -71,6 +102,7 @@ def prepareModelInput(condition):
                     int(reviewerTransformed["TS_ShoppingFanatic_Ind"]), 
                     int(reviewerTransformed["TS_60PlusTraveller_Ind"])
                     ]
+            reviewerTransformedOut.close()
         predictors.extend(reviewerModel2)
         reviewerAggrOut = dataMgr.getReviewerAggregate(reviewer["userName"])
         reviewerModel3=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
@@ -90,23 +122,25 @@ def prepareModelInput(condition):
                     int(reviewerAggr["SS_NA_Ind"])
                 ]
         predictors.extend(reviewerModel3)
-        #print (predictors)
-        print(predictors)
-        print ("Num Reviews", predictors[30], "Num Helpful", predictors[31])
+        reviewerAggrOut.close()
         Y=0
         if (predictors[30] != 0) :
             Y=predictors[31]/ predictors[30]
-        print (Y)
         aCase = {}
         aCase["predictors"]=predictors
-        aCase["class"] =  Y
+        aCase["class"] = 0
+        if ( Y > 0.3 ) :
+            aCase["class"] = 1
+
+        print (aCase)            
         trainingData.append(aCase)
-    #dataMgr.disconnect()
+    reviewers.close()
+    dataMgr.disconnect()
     return trainingData
 
 def runModelForReviewer(reviewerId): 
     out = prepareModelInputByReviewer(reviewerId)
-    result = fML_SVM_Load_TestModel(out[0]["predictors"])
+    result = {} #fML_SVM_Load_TestModel(out[0]["predictors"])
     return result
           
 def runModelForEntity(entityId):
@@ -123,6 +157,7 @@ if __name__ == '__main__':
     #getReviewsByEntity("d2439664")
     #getReviewsAndReviewer("MisterGong")
     #out = prepareModelInputByReviewer("MisterGong")
-    out = prepareModelInput("MisterGong")
+    out = prepareModelInput({})
+    #out = prepareModelInputByReviewer("MisterGong")
     print("----------------------")
     print(out)
