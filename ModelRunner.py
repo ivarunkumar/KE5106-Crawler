@@ -161,12 +161,12 @@ if __name__ == '__main__':
 #     for x in out:
 #         print(x)
 
-
-    out = prepareModelInputByReviewer("MisterGong")
-    print("<<<<<", out)
-    x= out[0]["predictors"]
-    print(x)
-    print("running model")
-    y = fML_SVM_Load_TestModel(x)
-    print("got", y)
+    #out = prepareModelInputByReviewer("MisterGong")
+    out = prepareModelInput({})
+    for r in out:
+        print("<<<<<", r)
+        x= r["predictors"]
+        print("running model")
+        y = fML_SVM_Load_TestModel(x)
+        print("got", y, "actual", r["class"])
       

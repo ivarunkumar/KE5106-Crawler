@@ -50,13 +50,13 @@ def fTrainDataProcess (csv):
 def fML_SVM_Make_PredModel(X, y):    # Model # total attributes + target
 	X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.10, random_state=42)
 		
-	vSVMML = SVC(probability=True)
-	vSVMML.fit(X_train, y_train)
-	SVC(C=1.0, cache_size=200, class_weight=None, coef0=0.0,
+	#vSVMML = SVC(probability=True)
+	
+	vSVMML = SVC(C=1.0, cache_size=200, class_weight=None, coef0=0.0,
 			decision_function_shape='ovr', degree=3, gamma='auto', kernel='rbf',
 			max_iter=-1, probability=True, random_state=None, shrinking=True,
 			tol=0.001, verbose=False)
-		
+	vSVMML.fit(X_train, y_train)
 	y_pred = vSVMML.predict(X_test)
 	
 	#print accuracy_score(y_test, pred)
@@ -68,7 +68,7 @@ def fML_SVM_Make_PredModel(X, y):    # Model # total attributes + target
 	
 def fML_SVM_Load_TestModel(i): # Data Set
 	# Load the R2 Model for Traipadvisor
-	vSVMML = joblib.load('Tripadvisor_R2_MLModel.pkl') 
+	vSVMML = joblib.load('resources/Tripadvisor_R2_MLModel.pkl') 
 	vTesting = i
 	vTesting = np.array(vTesting).reshape((1, -1))
 	
@@ -101,7 +101,7 @@ def fML_SVM_Load_TestModel(i): # Data Set
 #vData = ['3','0','0','2677','4','20','3','15','5','1','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','24','1','9','10','5','0','0','8','1','15','0']
 #vData = ['5','4','2','13631','6','39','18','48','34','8','1','1','0','0','1','0','1','0','0','0','0','0','1','0','0','0','0','0','0','0','109','34','56','32','21','0','0','43','22','44','0']
 #fML_SVM_Load_TestModel(vData)
-#fTrainDataProcess("R2Dumping_01.csv")
+fTrainDataProcess("Input_01.csv")
 
 
 
