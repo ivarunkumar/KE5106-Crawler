@@ -1,4 +1,5 @@
 -- Create Aggr with Output
+db.ReviewsAggr.drop();
 db.Reviews.aggregate([
 {"$group":
 	{
@@ -23,6 +24,7 @@ db.Reviews.aggregate([
 },
 {$out:"ReviewsAggr"}])
 
+db.ReviewersTransform.drop();
 db.Reviewers.aggregate([
 {$unwind: '$travelStyle'},
 {"$group":

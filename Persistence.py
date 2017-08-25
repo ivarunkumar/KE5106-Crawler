@@ -45,7 +45,11 @@ class DataManager :
     def readReviews(self, condition): 
         result = DataManager.tripAdvisorDB.Reviews.find(condition)
         return result
-    
+ 
+    def readReviewsLimited(self, condition): 
+        result = DataManager.tripAdvisorDB.Reviews.find(condition).limit(1000)
+        return result
+      
     def getReviewsAndReviewer(self, reviewerId):
         out = DataManager.tripAdvisorDB.Reviews.aggregate([
             {"$match": {"sentimentScore.label": {"$ne":"NA"}}},
@@ -70,3 +74,11 @@ class DataManager :
     
     def disconnect(self): 
         DataManager.mongoClient.close() 
+        
+        
+    def updateReview (self, condition, updateStmt) :
+        try:
+            print ("@update", condition, updateStmt)
+            DataManager.tripAdvisorDB.Reviews.update_one(condition, updateStmt, upsert=False)
+        except errors.DuplicateKeyError as e:
+            print(e)
