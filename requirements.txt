@@ -9,3 +9,4 @@ pymongo
 sklearn
 numpy
 scipy
+numpy+mkl
