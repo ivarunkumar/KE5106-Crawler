@@ -138,7 +138,7 @@ def prepareModelInput(condition):
 
 def runModelForReviewer(reviewerId): 
     out = prepareModelInputByReviewer(reviewerId)
-    result = {} #fML_SVM_Load_TestModel(out[0]["predictors"])
+    result = {"output" : "none"} #fML_SVM_Load_TestModel(out[0]["predictors"])
     return result
           
 def runModelForEntity(entityId):

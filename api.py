@@ -1,14 +1,11 @@
 from bson import json_util
 from flask import Flask, jsonify, request, json
-from flask_pymongo import PyMongo
 from pymongo import MongoClient
 from ModelRunner import runModelForEntity, runModelForReviewer
 
 app = Flask(__name__)
-app.config['MONGO_DBNAME'] ='TripAdivor'
-app.config['MONGO_URL']='mongodb://localhost:27017/TripAdvisor'
 
-mongo =PyMongo(app)
+
 @app.route('/read',methods=['GET'])
 def read():
     print('----------------------')
@@ -25,3 +22,7 @@ def read():
 
 
     return jsonify(data=result)
+
+
+if __name__ == '__main__':
+    app.run(debug=True)
