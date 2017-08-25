@@ -58,12 +58,14 @@ class DataManager :
         result = DataManager.tripAdvisorDB.Reviewers.find({"userName" : reviewerId})
         return result
     
-    def getAllReviewers (self):
-        return DataManager.tripAdvisorDB.Reviewers.find().limit(10);     
+    def getAllReviewers (self, condition):
+        return DataManager.tripAdvisorDB.Reviewers.find(condition);     
     
     def getReviewerTransformed(self, reviewerId):
         return DataManager.tripAdvisorDB.ReviewersTransform.find({"_id" : reviewerId}) 
 
     def getReviewerAggregate(self, reviewerId):
         return DataManager.tripAdvisorDB.ReviewsAggr.find({"_id" : reviewerId}) 
-        
+    
+#     def disconnection(self): 
+#         DataManager.tripAdvisorDB. 

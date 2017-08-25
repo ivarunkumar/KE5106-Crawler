@@ -7,3 +7,5 @@ flask-jsonpify
 flask-restful
 pymongo
 sklearn
+numpy
+scipy
