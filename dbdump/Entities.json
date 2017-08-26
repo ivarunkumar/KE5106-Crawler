@@ -1,2 +1,3 @@
 {"_id":{"$oid":"599d4dff91596f18ac3c0e14"},"entityId":"d2439664","name":"Universal Studios Singapore","rating":{"excellent":"6188","veryGood":"3922","average":"1230","poor":"277","terrible":"187"}}
 {"_id":{"$oid":"599eea8191596f1544ead384"},"entityId":"d6714698","name":"Trick Eye Museum Singapore","rating":{"excellent":"260","veryGood":"280","average":"139","poor":"28","terrible":"23"}}
+{"_id":{"$oid":"59a06e9d91596f50fc5b554a"},"entityId":"d324541","name":"Little India","rating":{"excellent":"488","veryGood":"863","average":"445","poor":"144","terrible":"79"}}
