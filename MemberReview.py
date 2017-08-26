@@ -213,12 +213,6 @@ def getMemberReviewsCallback(futureObj) :
     #Review = futureObj.result()
     print("@getMemberReviewsCallback", threading.currentThread().getName(), "Completed")
     #jsonMemberReviewList.append(Review)
-            
-     #     pprint.pprint(MemberReviewData)
-    #     pprint.pprint(DetailsReviewData)
-    #     print('reviewList: ' + str(len(MemberReviewData)))
-    #     print('reviewList: ' + str(len(DetailsReviewData)))
-
 
 #result = getMemberReviews('https://www.tripadvisor.com.sg/members/vykye2000')
 
