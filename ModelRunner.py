@@ -138,40 +138,72 @@ def prepareModelInput(condition):
 
 def runModelForReviewer(reviewerId): 
     out = prepareModelInputByReviewer(reviewerId)
-    result = {"output" : "none"} #fML_SVM_Load_TestModel(out[0]["predictors"])
-    return result
+    x= out[0]["predictors"]
+    y = fML_SVM_Load_TestModel(x)
+    result = (y[1][0][1])
+    print(result)
+    rating = None
+    if result >= 0.70 :
+        rating = "Gold"
+    elif result >= 0.30 and result <0.70 :
+        rating = "Silver"
+    else :
+        rating = "Bronze"
+    
+    dbMgr = DataManager()
+    #dbMgr.updateReviewer({"userName" :reviewerId}, {"$set": {"r2Rating" : rating, "updatedOn": str(datetime.date)}})
+    dbMgr.updateReviewer({"userName" :reviewerId}, {"$set": {"r2Rating" : rating, "r2Score" : result}})
+    return rating
           
 def runModelForEntity(entityId):
     dataMgr = DataManager()
-    reviewers = dataMgr.getAllReviewers({"entityId" : entityId})
-    result = []
-    for reviewer in reviewers :
-        out = prepareModelInputByReviewer(reviewer["userName"])
-        result.extend(out)
-        ### TODO : do math here!
-    return result
-              
-if __name__ == '__main__':
-    #getReviewsByEntity("d2439664")
-# 
-#     out = prepareModelInput({})
-#     print("----------------------")
-#     X = []
-#     Y = []
-#     for x in out:
-#         print(x)
 
-    #out = prepareModelInputByReviewer("MisterGong")
-    m = 0
-    out = prepareModelInput({})
-    for r in out:
-        print("<<<<<", r)
-        x= r["predictors"]
-        print("running model")
-        y = fML_SVM_Load_TestModel(x)
-        print(y[1][0][1])
-        if (y[1][0][1] > m) :
-            m = y[1][0][1]
-        print("got", y, "actual", r["class"])
-      
-    print ("golden #", m)
+    for x in dataMgr.getEntityR2Rating(entityId) :
+        return x["count"]
+#     reviews = dataMgr.readReviews({"entityId" : entityId})
+#     result = []
+#     for review in reviews :
+#         print (review["reviewerId"])
+#         out = runModelForReviewer(review["reviewerId"])
+#         print(out)
+#         result.extend(out)
+#         ### TODO : do math here!
+#     print(result)
+#     return result
+              
+# if __name__ == '__main__':
+#     #getReviewsByEntity("d2439664")
+# # 
+# #     out = prepareModelInput({})
+# #     print("----------------------")
+# #     X = []
+# #     Y = []
+# #     for x in out:
+# #         print(x)
+# 
+#     #out = prepareModelInputByReviewer("MisterGong")
+#     m = 0
+#     out = prepareModelInput({})
+#     for r in out:
+#         print("<<<<<", r)
+#         x= r["predictors"]
+#         print("running model")
+#         y = fML_SVM_Load_TestModel(x)
+#         print(y[1][0][1])
+#         if (y[1][0][1] > m) :
+#             m = y[1][0][1]
+#         print("got", y, "actual", r["class"])
+#       
+#     print ("golden #", m)
+
+if __name__ == '__main__':
+#     out = prepareModelInputByReviewer("32jacquelines")    
+#     x= out[0]["predictors"]
+#     y = fML_SVM_Load_TestModel(x)
+#     print(y[1][0][1])
+#     print("got", y, "actual", out[0]["class"])
+#     
+    result = runModelForReviewer("32jacquelines")
+    print (result)
+    exit(0)
+    

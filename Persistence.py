@@ -82,3 +82,20 @@ class DataManager :
             DataManager.tripAdvisorDB.Reviews.update_one(condition, updateStmt, upsert=False)
         except errors.DuplicateKeyError as e:
             print(e)
+
+    def updateReviewer (self, condition, updateStmt) :
+        try:
+            print ("@update reviewer", condition, updateStmt)
+            DataManager.tripAdvisorDB.Reviewers.update_one(condition, updateStmt, upsert=False)
+        except errors.DuplicateKeyError as e:
+            print(e)
+
+    def getEntityR2Rating(self, entityId):
+        out = DataManager.tripAdvisorDB.Reviews.aggregate([
+            {"$match": {"entityId": entityId}},
+            {"$lookup": {"from":"Reviewers","localField":"reviewerId", "foreignField":"userName", "as" : "reviewer" }},
+            {"$unwind":"$reviewer"},
+            {"$project": {"ratingX": {"$multiply": [ "$rating", "$reviewer.r2Score"] }}},
+            {"$group" : {"_id" : "0", "count" : {"$avg" : "$ratingX"}}}
+            ])
+        return out

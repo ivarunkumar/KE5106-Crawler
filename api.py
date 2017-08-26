@@ -6,23 +6,16 @@ from ModelRunner import runModelForEntity, runModelForReviewer
 app = Flask(__name__)
 
 
-@app.route('/read',methods=['GET'])
-def read():
+@app.route('/reviewer/<username>',methods=['GET'])
+def getReviewerRating(username):
     print('----------------------')
-    print(request.args.get('username'))
-    username =request.args.get('username')
-
-    #connection = MongoClient('localhost', 27017)  # Connect to mongodb
-    #print(connection.database_names())  # Return a list of db, equal to: > show dbs
-    #db = connection['TripAdvisor']  # equal to: > use testdb1
-    #print("posts" in db.collection_names())  # Check if collection "posts"
-    # collection = db['Reviewers']
-
     result = runModelForReviewer(username)
+    return jsonify(rating=result)
 
-
-    return jsonify(data=result)
-
-
+@app.route('/entity/<entityId>',methods=['GET'])
+def getEntityRating(entityId):
+    result = runModelForEntity(entityId)
+    return jsonify(rating=result)
+    
 if __name__ == '__main__':
     app.run(debug=True)

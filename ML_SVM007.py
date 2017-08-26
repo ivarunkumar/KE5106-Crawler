@@ -67,7 +67,7 @@ def fML_SVM_Make_PredModel(X, y):    # Model # total attributes + target
 	
 def fML_SVM_Load_TestModel(i): # Data Set
 	# Load the R2 Model for Traipadvisor
-	vSVMML = joblib.load('Tripadvisor_R2_MLModel.pkl') 
+	vSVMML = joblib.load('resources/Tripadvisor_R2_MLModel.pkl') 
 	
 	#scaler = MinMaxScaler(feature_range=(0, 1))
 	#rescaledX = scaler.fit_transform(i)
@@ -76,8 +76,8 @@ def fML_SVM_Load_TestModel(i): # Data Set
 	
 	vPredProb1 = vSVMML.predict(vTesting)
 	vPredProb2 = vSVMML.predict_proba(vTesting)
-	print("Predicted :  ",vPredProb1)
-	print("Predict Probabilities : ",vPredProb2)
+	#print("Predicted :  ",vPredProb1)
+	#print("Predict Probabilities : ",vPredProb2)
 	
 	
 	
@@ -102,7 +102,7 @@ def fML_SVM_Load_TestModel(i): # Data Set
 #vData = ['9','3','2','11343','6','37','19','38','16','4','2','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','79','28','58','10','9','0','2','30','16','33','0']
 vData = ['3','0','0','2677','4','20','3','15','5','1','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','24','1','9','10','5','0','0','8','1','15','0']
 #vData = ['5','4','2','13631','6','39','18','48','34','8','1','1','0','0','1','0','1','0','0','0','0','0','1','0','0','0','0','0','0','0','109','34','56','32','21','0','0','43','22','44','0']
-fML_SVM_Load_TestModel(vData)
+#####fML_SVM_Load_TestModel(vData)
 #fTrainDataProcess("R2Dumping_02.csv")
 
 

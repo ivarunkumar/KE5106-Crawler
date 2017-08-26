@@ -24,12 +24,6 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
 from selenium.common.exceptions import TimeoutException
 
-#gSeleniumDriver = webdriver.Chrome(executable_path=r"E:\chromedriver_win32\chromedriver.exe")
-#gSeleniumDriver = webdriver.Chrome()
-
-
-#assert "ION" in gSeleniumDriver.title
-
 # ------- Set Global Variables
 gYggdrasil = [] #--- Array container for Parse-Trees
 
@@ -179,6 +173,7 @@ def fetchReviewerInfo(htmlCode) :
     
 
 def fetchReviewerInfoCallback(futureObj) :
+    gReviewerTaskMgr.start()
     log("@fetchReviewerInfoCallback", futureObj.result())
     profiles = futureObj.result()
     # Fetch the profile URL and scrap member details
@@ -192,6 +187,7 @@ def fetchReviewerInfoCallback(futureObj) :
         payload["ratingDistribution"] = profile["ratingDistribution"]
         task = Task("MEMBER_INFO", getMemberReviews, getMemberReviewsCallback, payload)
         gReviewerTaskMgr.addTaskQ(task)
+    gReviewerTaskMgr.shutdown()    
     log("@fetchReviewerInfoCallback", "Done")
 
 
@@ -202,8 +198,12 @@ def log(key, content):
     print(key, threading.currentThread().getName(), content)
     
 def main(url, startPageNum, numPages):
-    gReviewerTaskMgr = TaskManager("REVIEWER")
+    #gReviewerTaskMgr = TaskManager("REVIEWER")
+    gTaskMgr.start()
+    #gReviewerTaskMgr.start()
     fetchReviewers(url, startPageNum, numPages)
+    gTaskMgr.shutdown()
+    #gReviewerTaskMgr.shutdown()
     #stopTask = Task("END_WORKER", None, None, None)
     #gTaskMgr.addTaskQ(stopTask)
     #gReviewTaskMgr.addTaskQ(stopTask)
